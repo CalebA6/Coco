@@ -26,6 +26,12 @@ public class ReversibleScanner {
 		return lastToken;
 	}
 	
+	public Token peek() {
+		Token token = next();
+		needRereading.add(token);
+		return token;
+	}
+	
 	public Token last() {
 		return lastToken;
 	}

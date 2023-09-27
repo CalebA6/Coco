@@ -6,9 +6,9 @@ import java.util.Map;
 public class Variables {
 	
 	private Variables parent;
-	private Map<String, Variable> variables;
+	private Map<String, String> variables;
 	
-	private Variables(Variables parent, Map<String, Variable> variables) {
+	private Variables(Variables parent, Map<String, String> variables) {
 		this.parent = parent;
 		this.variables = variables;
 	}
@@ -16,22 +16,43 @@ public class Variables {
 	public Variables() {
 		parent = null;
 		variables = new HashMap<>();
+		
+		variables.put("readInt", "()->int");
+		variables.put("readFloat", "()->float");
+		variables.put("readBool", "()->bool");
+		variables.put("printInt", "(int)->void");
+		variables.put("printFloat", "(float)->void");
+		variables.put("printBool", "(bool)->void");
+		variables.put("println", "()->void");
+		variables.put("arrcpy", "(T[],T[],int)->void");
 	}
 	
-	public Variable get(String name) throws NonexistantVariableException {
-		if(variables.containsKey(name)) {
-			return variables.get(name);
+	public boolean has(Token ident) {
+		try {
+			get(ident);
+			return true;
+		} catch(NonexistantVariableException e) {
+			return false;
+		}
+	}
+	
+	public String get(Token ident) throws NonexistantVariableException {
+		if(variables.containsKey(ident.lexeme())) {
+			return variables.get(ident.lexeme());
 		} else {
 			if(parent != null) {
-				return parent.get(name);
+				return parent.get(ident);
 			} else {
-				throw new NonexistantVariableException();
+				throw new NonexistantVariableException(ident);
 			}
 		}
 	}
 	
-	public void add(String name, Variable variable) {
-		variables.put(name, variable);
+	public void add(Token name, String type) throws RedefinitionException {
+		if(variables.containsKey(name.lexeme())) {
+			throw new RedefinitionException(name);
+		}
+		variables.put(name.lexeme(), type);
 	}
 	
 	public void enterLevel() {

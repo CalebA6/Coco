@@ -14,6 +14,7 @@ public class ErrorChecker {
 		ErrorChecker.checkForMoreInput(source, expected);
 		Token token = source.next();
 		if(token.kind() != kind) {
+			source.push(token);
 			throw new SyntaxException("Expected " + expected + " but got " + token.kind() + ".", token);
 		} else {
 			return token;
