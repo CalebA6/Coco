@@ -7,6 +7,7 @@ import coco.ErrorChecker;
 import coco.RedefinitionException;
 import coco.ReversibleScanner;
 import coco.SyntaxException;
+import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 
@@ -16,14 +17,17 @@ public class Parameters /*extends Traversible*/ {
 	
 	public Parameters(ReversibleScanner source, Variables variables) throws SyntaxException, RedefinitionException {
 		ErrorChecker.mustBe(Kind.OPEN_PAREN, "OPEN_PAREN", source);
-		parameters.add(new Parameter(source, variables));
-		while(true) {
-			try {
-				ErrorChecker.mustBe(Kind.COMMA, "COMMA", source);
-			} catch(SyntaxException e) {
-				break;
-			}
+		Token next = source.peek();
+		if(next.kind() != Kind.CLOSE_PAREN) {
 			parameters.add(new Parameter(source, variables));
+			while(true) {
+				try {
+					ErrorChecker.mustBe(Kind.COMMA, "COMMA", source);
+				} catch(SyntaxException e) {
+					break;
+				}
+				parameters.add(new Parameter(source, variables));
+			}
 		}
 		ErrorChecker.mustBe(Kind.CLOSE_PAREN, "CLOSE_PAREN", source);
 	}

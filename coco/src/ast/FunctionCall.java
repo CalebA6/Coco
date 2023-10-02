@@ -2,6 +2,7 @@ package ast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
@@ -11,17 +12,18 @@ import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 
-public class FunctionCall extends Traversible {
+public class FunctionCall extends CheckableNode {
 	
 	Token function;
 	private List<Relation> parameters = new ArrayList<>();
-	String type;
+	Variables variables;
+	Set<String> types;
 
 	public FunctionCall(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
 		ErrorChecker.mustBe(Kind.CALL, "CALL", source);
 		ErrorChecker.checkForMoreInput(source, "FUNCTION NAME");
 		function = source.next();
-		type = variables.get(function);
+		this.variables = variables;
 		ErrorChecker.mustBe(Kind.OPEN_PAREN, "OPEN_PAREN", source);
 
 		ErrorChecker.checkForMoreInput(source, "CLOSE_PAREN");
@@ -44,12 +46,31 @@ public class FunctionCall extends Traversible {
 		}
 	}
 	
+	public void checkFunctionCalls(AST parent) {
+		try {
+			types = variables.get(function);
+		} catch(NonexistantVariableException e) {
+			parent.reportError(e);
+		}
+	}
+	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
 		addLevel(level, print);
 		print.append("FunctionCall[");
 		print.append(function.lexeme());
-		print.append(type);
+		print.append(":");
+		boolean first = true;
+		for(String type: types) {
+			if(first) {
+				first = false;
+			} else {
+				print.append(", ");
+				print.append(function.lexeme());
+				print.append(":");
+			}
+			print.append(type);
+		}
 		print.append("]\n");
 		addLevel(level+1, print);
 		print.append("ArgumentList\n");

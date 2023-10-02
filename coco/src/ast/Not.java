@@ -7,13 +7,17 @@ import coco.SyntaxException;
 import coco.Token.Kind;
 import coco.Variables;
 
-public class Not extends Traversible {
+public class Not extends CheckableNode {
 	
 	Relation relation;
 
 	public Not(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
 		ErrorChecker.mustBe(Kind.NOT, "NOT", source);
 		relation = new Relation(source, variables);
+	}
+	
+	public void checkFunctionCalls(AST parent) {
+		relation.checkFunctionCalls(parent);
 	}
 	
 	public String printPreOrder(int level) {

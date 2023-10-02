@@ -7,7 +7,7 @@ import coco.SyntaxException;
 import coco.Variables;
 import coco.Token.Kind;
 
-public class Repeat extends Traversible {
+public class Repeat extends CheckableNode {
 
 	private Relation decision;
 	private Statements action;
@@ -21,12 +21,17 @@ public class Repeat extends Traversible {
 		ErrorChecker.mustBe(Kind.CLOSE_PAREN, "CLOSE_PAREN", source);
 	}
 	
+	public void checkFunctionCalls(AST parent) {
+		action.checkFunctionCalls(parent);
+		decision.checkFunctionCalls(parent);
+	}
+	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
 		addLevel(level, print);
 		print.append("RepeatStatement\n");
-		print.append(decision.printPreOrder(level+1));
 		print.append(action.printPreOrder(level+1));
+		print.append(decision.printPreOrder(level+1));
 		return print.toString();
 	}
 	

@@ -11,7 +11,7 @@ import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 
-public class Statements extends Traversible {
+public class Statements extends CheckableNode {
 	
 	private List<Statement> statements = new ArrayList<>();
 
@@ -23,7 +23,13 @@ public class Statements extends Traversible {
 			ErrorChecker.mustBe(Kind.SEMICOLON, "SEMICOLON", source);
 			
 			next = source.peek();
-		} while((next.kind() != Kind.CLOSE_BRACE) && (next.kind() != Kind.FI) && (next.kind() != Kind.ELSE));
+		} while((next.kind() != Kind.CLOSE_BRACE) && (next.kind() != Kind.FI) && (next.kind() != Kind.ELSE) && (next.kind() != Kind.OD) && (next.kind() != Kind.UNTIL));
+	}
+	
+	public void checkFunctionCalls(AST parent) {
+		for(Statement statement: statements) {
+			statement.checkFunctionCalls(parent);
+		}
 	}
 	
 	public String printPreOrder(int level) {

@@ -8,7 +8,7 @@ import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
 
-public class Return extends Traversible {
+public class Return extends CheckableNode {
 	
 	private Relation value;
 
@@ -20,6 +20,10 @@ public class Return extends Traversible {
 		} else {
 			value = new Relation(source, variables);
 		}
+	}
+	
+	public void checkFunctionCalls(AST parent) {
+		if(value != null) value.checkFunctionCalls(parent);
 	}
 	
 	public String printPreOrder(int level) {

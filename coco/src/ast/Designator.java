@@ -11,14 +11,15 @@ import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
 
-public class Designator extends Traversible {
+public class Designator extends Node {
 
 	private Token name;
+	private String type;
 	private List<Relation> indicies = new ArrayList<>();
 	
 	public Designator(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
 		name = ErrorChecker.mustBe(Kind.IDENT, "IDENT", source);
-		variables.get(name);
+		type = variables.get(name).toArray(new String[0])[0];
 		while(true) {
 			try {
 				ErrorChecker.mustBe(Kind.OPEN_BRACKET, "OPEN_BRACKET", source);
@@ -30,6 +31,15 @@ public class Designator extends Traversible {
 		}
 	}
 	
+	public Node genAST() {
+		Variable var = new Variable(name, type);
+		if(indicies.size() > 0) {
+			return new ArrayIndex(var, 0, indicies);
+		} else {
+			return var;
+		}
+	}
+	
 	public Token getName() {
 		return name;
 	}
@@ -38,6 +48,8 @@ public class Designator extends Traversible {
 		StringBuilder print = new StringBuilder();
 		addLevel(level, print);
 		print.append(name.lexeme());
+		print.append(":");
+		print.append(type);
 		print.append("\n");
 		for(Relation index: indicies) {
 			addLevel(level+1, print);

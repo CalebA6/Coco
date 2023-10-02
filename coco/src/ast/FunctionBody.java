@@ -8,7 +8,7 @@ import coco.SyntaxException;
 import coco.Token.Kind;
 import coco.Variables;
 
-public class FunctionBody extends Traversible {
+public class FunctionBody extends Node {
 	
 	VariableDeclarations varDeclarations;
 	Statements statements;
@@ -19,6 +19,10 @@ public class FunctionBody extends Traversible {
 		statements = new Statements(source, variables);
 		ErrorChecker.mustBe(Kind.CLOSE_BRACE, "CLOSE_BRACE", source);
 		ErrorChecker.mustBe(Kind.SEMICOLON, "SEMICOLON", source);
+	}
+	
+	public void checkFunctionCalls(AST parent) {
+		statements.checkFunctionCalls(parent);
 	}
 	
 	public String printPreOrder(int level) {

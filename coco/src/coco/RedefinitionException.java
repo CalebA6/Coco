@@ -10,7 +10,7 @@ public class RedefinitionException extends Exception {
 	private String error;
 	
 	public RedefinitionException(Token var) {
-		error = "RedefinitionError(" + var.lineNumber() + "," + var.charPosition() + ")[" + var.lexeme() + "]\n";
+		error = "DeclareSymbolError(" + var.lineNumber() + "," + var.charPosition() + ")[" + var.lexeme() + " already exists.]\n";
 	}
 	
 	@Override

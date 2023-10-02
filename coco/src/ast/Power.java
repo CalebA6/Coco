@@ -11,9 +11,9 @@ import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 
-public class Power extends Traversible {
+public class Power extends CheckableNode {
 	
-	private List<Traversible> operands = new ArrayList<>();
+	private List<Node> operands = new ArrayList<>();
 	private List<Token> operations = new ArrayList<>();
 
 	public Power(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
@@ -30,41 +30,43 @@ public class Power extends Traversible {
 		}
 	}
 	
+	public void checkFunctionCalls(AST parent) {
+		for(Node operand: operands) {
+			if(operand instanceof CheckableNode) {
+				((CheckableNode) operand).checkFunctionCalls(parent);
+			}
+		}
+	}
+	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
 		if(operations.size() > 0) {
 			for(int opIndex=0; opIndex<operations.size(); ++opIndex) {
 				addLevel(level+opIndex, print);
 				Token operation = operations.get(opIndex);
-				if(operation.kind() == Kind.MUL) {
-					print.append("Multiplication\n");
-				} else if(operation.kind() == Kind.DIV) { 
-					print.append("Division\n");
-				} else if(operation.kind() == Kind.MOD) {
-					print.append("Modulo\n");
-				} else if(operation.kind() == Kind.AND) {
-					print.append("LogicalAnd\n");
+				if(operation.kind() == Kind.POW) {
+					print.append("Power\n");
 				} else {
 					print.append(operation.kind());
 					print.append("\n");
 				}
-				operands.get(opIndex).printPreOrder(level+opIndex+1);
+				print.append(operands.get(opIndex).printPreOrder(level+opIndex+1));
 			}
-			operands.get(operations.size()).printPreOrder(level+operations.size());
+			print.append(operands.get(operations.size()).printPreOrder(level+operations.size()));
 		} else {
 			print.append(operands.get(0).printPreOrder(level));
 		}
 		return print.toString();
 	}
 	
-	private Traversible getGroup(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
+	private Node getGroup(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
 		ErrorChecker.checkForMoreInput(source, "group");
 		Token token = source.next();
 		if((token.kind() == Kind.INT_VAL) || (token.kind() == Kind.FLOAT_VAL) || (token.kind() == Kind.TRUE) || (token.kind() == Kind.FALSE)) {
 			return new Literal(token);
 		} else if(token.kind() == Kind.IDENT) {
 			source.push(token);
-			return new Designator(source, variables);
+			return new Designator(source, variables).genAST();
 		} else if(token.kind() == Kind.NOT) {
 			source.push(token);
 			return new Not(source, variables);

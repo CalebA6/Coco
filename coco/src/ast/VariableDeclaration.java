@@ -12,7 +12,7 @@ import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 
-public class VariableDeclaration extends Traversible {
+public class VariableDeclaration extends Node {
 	
 	private Token type;
 	private List<Token> arrayDimensions = new ArrayList<>();
@@ -60,15 +60,14 @@ public class VariableDeclaration extends Traversible {
 	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
-		addLevel(level, print);
-		print.append("VariableDeclaration[");
-		print.append(identifiers.get(0).lexeme());
-		for(int i=1; i<identifiers.size(); ++i) {
-			print.append("," + identifiers.get(i).lexeme());
+		for(Token identifier: identifiers) {
+			addLevel(level, print);
+			print.append("VariableDeclaration[");
+			print.append(identifier.lexeme());
+			print.append(":");
+			print.append(getTypeString());
+			print.append("]\n");
 		}
-		print.append(":");
-		print.append(getTypeString());
-		print.append("/n");
 		return print.toString();
 	}
 	

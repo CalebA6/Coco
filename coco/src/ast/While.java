@@ -7,7 +7,7 @@ import coco.SyntaxException;
 import coco.Token.Kind;
 import coco.Variables;
 
-public class While extends Traversible {
+public class While extends CheckableNode {
 	
 	private Relation decision;
 	private Statements action;
@@ -20,6 +20,11 @@ public class While extends Traversible {
 		ErrorChecker.mustBe(Kind.DO, "DO", source);
 		action = new Statements(source, variables);
 		ErrorChecker.mustBe(Kind.OD, "OD", source);
+	}
+	
+	public void checkFunctionCalls(AST parent) {
+		decision.checkFunctionCalls(parent);
+		action.checkFunctionCalls(parent);
 	}
 	
 	public String printPreOrder(int level) {

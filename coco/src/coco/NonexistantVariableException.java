@@ -10,7 +10,7 @@ public class NonexistantVariableException extends Exception {
 	private String error;
 	
 	public NonexistantVariableException(Token var) {
-		error = "UnknownSymbolError(" + var.lineNumber() + "," + var.charPosition() + ")[" + var.lexeme() + "]\n";
+		error = "ResolveSymbolError(" + var.lineNumber() + "," + var.charPosition() + ")[Could not find " + var.lexeme() + ".]\n";
 	}
 	
 	@Override

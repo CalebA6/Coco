@@ -16,7 +16,7 @@ public class Parameter {
 	public Parameter(ReversibleScanner source, Variables variables) throws SyntaxException, RedefinitionException {
 		type = new ParameterType(source);
 		name = ErrorChecker.mustBe(Kind.IDENT, "IDENT", source);
-		variables.add(name, null);
+		variables.add(name, type.toString());
 	}
 	
 	public String getTypeString() {

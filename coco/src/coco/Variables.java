@@ -1,68 +1,184 @@
 package coco;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
+
+import ast.AST;
 
 public class Variables {
 	
-	private Variables parent;
-	private Map<String, String> variables;
+	private Table table;
+	private Map<String, Set<Function>> functions = new HashMap<>();
+	private AST parent;
 	
-	private Variables(Variables parent, Map<String, String> variables) {
+	public Variables(AST parent) {
+		table = new Table(null, new HashMap<>());
 		this.parent = parent;
-		this.variables = variables;
+		
+		Set<Function> defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("()", "int"));
+		functions.put("readInt", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("()", "float"));
+		functions.put("readFloat", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("()", "bool"));
+		functions.put("readBool", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("(int)", "void"));
+		functions.put("printInt", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("(float)", "void"));
+		functions.put("printFloat", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("(bool)", "void"));
+		functions.put("printBool", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("()", "void"));
+		functions.put("println", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("(T[],T[],int)", "void"));
+		functions.put("arrcpy", defaultType);
 	}
 	
 	public Variables() {
-		parent = null;
-		variables = new HashMap<>();
+		table = new Table(null, new HashMap<>());
 		
-		variables.put("readInt", "()->int");
-		variables.put("readFloat", "()->float");
-		variables.put("readBool", "()->bool");
-		variables.put("printInt", "(int)->void");
-		variables.put("printFloat", "(float)->void");
-		variables.put("printBool", "(bool)->void");
-		variables.put("println", "()->void");
-		variables.put("arrcpy", "(T[],T[],int)->void");
+		Set<Function> defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("()", "int"));
+		functions.put("readInt", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("()", "float"));
+		functions.put("readFloat", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("()", "bool"));
+		functions.put("readBool", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("(int)", "void"));
+		functions.put("printInt", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("(float)", "void"));
+		functions.put("printFloat", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("(bool)", "void"));
+		functions.put("printBool", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("()", "void"));
+		functions.put("println", defaultType);
+		defaultType = new LinkedHashSet<>();
+		defaultType.add(new Function("(T[],T[],int)", "void"));
+		functions.put("arrcpy", defaultType);
 	}
 	
 	public boolean has(Token ident) {
 		try {
-			get(ident);
+			get(ident, true);
 			return true;
 		} catch(NonexistantVariableException e) {
 			return false;
 		}
 	}
 	
-	public String get(Token ident) throws NonexistantVariableException {
-		if(variables.containsKey(ident.lexeme())) {
-			return variables.get(ident.lexeme());
-		} else {
-			if(parent != null) {
-				return parent.get(ident);
+	public Set<String> get(Token ident) throws NonexistantVariableException {
+		return get(ident, false);
+	}
+	
+	public Set<String> get(Token ident, boolean pseudo) throws NonexistantVariableException {
+		Set<String> type = new LinkedHashSet<>();
+		try {
+			type.add(table.get(ident));
+			return type;
+		} catch(NonexistantVariableException e) {
+			if(functions.containsKey(ident.lexeme())) {
+				for(Function f: functions.get(ident.lexeme())) {
+					type.add(f.toString());
+				}
+				return type;
 			} else {
-				throw new NonexistantVariableException(ident);
+				if(!pseudo) parent.reportError(e);
+				type.add("error");
+				return type;
 			}
 		}
 	}
 	
 	public void add(Token name, String type) throws RedefinitionException {
-		if(variables.containsKey(name.lexeme())) {
-			throw new RedefinitionException(name);
+		try {
+			if(type.contains("->")) {
+				String[] typeParts = type.split("->");
+				String parameters = typeParts[0];
+				String returnType = typeParts[1];
+				Function newFunc = new Function(parameters, returnType);
+				if(has(name)) {
+					if(functions.containsKey(name.lexeme())) {
+						for(Function currType: functions.get(name.lexeme())) {
+							if(currType.equals(newFunc)) {
+								throw new RedefinitionException(name);
+							}
+						}
+					}
+				}
+				if(functions.containsKey(name.lexeme())) {
+					Set<Function> funcDefinitions = functions.get(name.lexeme());
+					if(funcDefinitions.contains(newFunc)) {
+						throw new RedefinitionException(name);
+					}
+					funcDefinitions.add(newFunc);
+				} else {
+					Set<Function> funcDefinitions = new LinkedHashSet<>();
+					funcDefinitions.add(newFunc);
+					functions.put(name.lexeme(), funcDefinitions);
+				}
+			} else {
+				table.add(name, type);
+			}
+		} catch(RedefinitionException e) {
+			parent.reportError(e);
 		}
-		variables.put(name.lexeme(), type);
 	}
 	
 	public void enterLevel() {
-		parent = new Variables(parent, variables);
-		variables = new HashMap<>();
+		Table newTable = new Table(table, new HashMap<>());
+		table = newTable;
 	}
 	
 	public void exitLevel() {
-		variables = parent.variables;
-		parent = parent.parent;
+		table = table.getParent();
+	}
+	
+	public Table getTable() {
+		return table;
 	}
 
+}
+
+class Function {
+	String parameters;
+	String type;
+	
+	Function(String parameters, String type) {
+		this.parameters = parameters;
+		this.type = type;
+	}
+	
+	@Override
+	public int hashCode() {
+		return parameters.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if(other.getClass() == Function.class) {
+			Function otherFunc = (Function)other;
+			return parameters.equals(otherFunc.parameters);
+		}
+		return false;
+	}
+	
+	@Override
+	public String toString() {
+		return parameters + "->" + type;
+	}
 }

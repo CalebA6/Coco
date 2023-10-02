@@ -8,11 +8,11 @@ import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
 
-public class If extends Traversible {
+public class If extends CheckableNode {
 	
 	private Relation decision;
 	private Statements action;
-	private Statements inaction;
+	private Statements inaction = null;
 
 	public If(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
 		ErrorChecker.mustBe(Kind.IF, "IF", source);
@@ -35,6 +35,16 @@ public class If extends Traversible {
 		} else {
 			throw new SyntaxException("Expected FI but got " + next.kind() + ".", next);
 		}
+		
+		ErrorChecker.mustBe(Kind.FI, "FI", source);
+	}
+	
+	public void checkFunctionCalls(AST parent) {
+		decision.checkFunctionCalls(parent);
+		action.checkFunctionCalls(parent);
+		if(inaction != null) {
+			inaction.checkFunctionCalls(parent);
+		}
 	}
 	
 	public String printPreOrder(int level) {
@@ -43,7 +53,9 @@ public class If extends Traversible {
 		print.append("IfStatement\n");
 		print.append(decision.printPreOrder(level+1));
 		print.append(action.printPreOrder(level+1));
-		print.append(inaction.printPreOrder(level+1));
+		if(inaction != null) {
+			print.append(inaction.printPreOrder(level+1));
+		}
 		return print.toString();
 	}
 	

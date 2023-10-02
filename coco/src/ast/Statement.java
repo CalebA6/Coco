@@ -8,9 +8,9 @@ import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 
-public class Statement extends Traversible {
+public class Statement extends CheckableNode {
 	
-	Traversible statement;
+	CheckableNode statement;
 
 	public Statement(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
 		ErrorChecker.checkForMoreInput(source, "STATEMENT");
@@ -30,6 +30,10 @@ public class Statement extends Traversible {
 		} else {
 			throw new SyntaxException("Expected statement but got " + token.kind() + ".", token);
 		}
+	}
+	
+	public void checkFunctionCalls(AST parent) {
+		statement.checkFunctionCalls(parent);
 	}
 	
 	public String printPreOrder(int level) {

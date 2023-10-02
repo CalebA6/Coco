@@ -1,6 +1,12 @@
 package ast;
 
-abstract class Traversible {
+import coco.Type;
+
+abstract class Node {
+	
+	public Node genAST() {
+		return this;
+	}
 
 	public String printPreOrder() {
 		return printPreOrder(0);
@@ -12,5 +18,7 @@ abstract class Traversible {
 			print.append("  ");
 		}
 	}
+	
+	// abstract public Type getType();
 	
 }

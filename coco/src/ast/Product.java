@@ -10,7 +10,7 @@ import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 
-public class Product extends Traversible {
+public class Product extends CheckableNode {
 	
 	private List<Power> operands = new ArrayList<>();
 	private List<Token> operations = new ArrayList<>();
@@ -26,6 +26,12 @@ public class Product extends Traversible {
 				source.push(operation);
 				break;
 			}
+		}
+	}
+	
+	public void checkFunctionCalls(AST parent) {
+		for(Power operand: operands) {
+			operand.checkFunctionCalls(parent);
 		}
 	}
 	
@@ -47,9 +53,9 @@ public class Product extends Traversible {
 					print.append(operation.kind());
 					print.append("\n");
 				}
-				operands.get(opIndex).printPreOrder(level+opIndex+1);
+				print.append(operands.get(opIndex).printPreOrder(level+opIndex+1));
 			}
-			operands.get(operations.size()).printPreOrder(level+operations.size());
+			print.append(operands.get(operations.size()).printPreOrder(level+operations.size()));
 		} else {
 			print.append(operands.get(0).printPreOrder(level));
 		}

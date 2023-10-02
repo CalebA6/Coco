@@ -3,7 +3,7 @@ package ast;
 import coco.Token;
 import coco.Token.Kind;
 
-public class Literal extends Traversible {
+public class Literal extends Node {
 
 	private Token literal;
 	

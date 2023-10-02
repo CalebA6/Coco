@@ -9,8 +9,9 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
+import coco.Type;
 
-public class Relation extends Traversible {
+public class Relation extends CheckableNode {
 	
 	private List<Sum> operands = new ArrayList<>();
 	private List<Token> operations = new ArrayList<>();
@@ -29,6 +30,12 @@ public class Relation extends Traversible {
 		}
 	}
 	
+	public void checkFunctionCalls(AST parent) {
+		for(Sum operand: operands) {
+			operand.checkFunctionCalls(parent);
+		}
+	}
+	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
 		if(operations.size() > 0) {
@@ -36,14 +43,21 @@ public class Relation extends Traversible {
 				addLevel(level+relation, print);
 				print.append("Relation[");
 				print.append(operations.get(relation).lexeme());
-				print.append("]");
-				operands.get(relation).printPreOrder(level+relation+1);
+				print.append("]\n");
+				print.append(operands.get(relation).printPreOrder(level+relation+1));
 			}
-			operands.get(operations.size()).printPreOrder(level+operations.size());
+			print.append(operands.get(operations.size()).printPreOrder(level+operations.size()));
 		} else {
 			print.append(operands.get(0).printPreOrder(level));
 		}
 		return print.toString();
 	}
+	
+	/* public Type getType() {
+		int state = 0;
+		for(Sum operand: operands) {
+			if(operand.getType() )
+		}
+	} */
 	
 }

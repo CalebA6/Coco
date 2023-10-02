@@ -1,4 +1,4 @@
-package coco;
+package interpreter;
 
 public class InvalidOperationException extends Exception {
 

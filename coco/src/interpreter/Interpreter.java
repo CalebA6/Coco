@@ -1,9 +1,16 @@
-package coco;
+package interpreter;
 
 import java.io.InputStream;
 import java.util.InputMismatchException;
 import java.util.NoSuchElementException;
 
+import coco.ErrorChecker;
+import coco.NoSuchStatementException;
+import coco.NonexistantVariableException;
+import coco.ReversibleScanner;
+import coco.Scanner;
+import coco.SyntaxException;
+import coco.Token;
 import coco.Token.Kind;
 
 public class Interpreter {
@@ -85,64 +92,6 @@ public class Interpreter {
 	public String errorReport() {
 		return error.toString();
 	}
-
-	/* public static void main(String[] args) {
-		if(args.length < 1) {
-			System.err.println("NOT ENOUGH ARGUMENTS: MAKE SURE TO GIVE A PROGRAM FILE NAME");
-			System.exit(-1);
-		}
-		
-		try {
-			source = new ReversibleScanner(new FileReader(args[0]));
-			if(args.length >= 2) {
-				input = new java.util.Scanner(new File(args[1]));
-			} else {
-				input = new java.util.Scanner(System.in);
-			}
-		} catch (FileNotFoundException e) {
-			System.err.println("FAILED TO OPEN FILE");
-			System.exit(-1);
-		}
-		
-		if(source.hasNext() && (source.next().kind() == Token.Kind.MAIN)) {
-			while(true) {
-				try {
-					declareVariable();
-				} catch(NoSuchStatementException e) {
-					break;
-				}
-			}
-			
-			ErrorChecker.checkForMoreInput(source, "OPENNING BRACE");
-			Token openningBracket = source.next();
-			if(openningBracket.kind() != Kind.OPEN_BRACE) {
-				System.err.println("UNEXPECTED TOKEN; EXPECTED OPEN BRACE");
-				System.exit(-1);
-			}
-			
-			try {
-				runStatements();
-			} catch (FatalException e) {
-				System.err.println(e);
-				System.exit(-1);
-			}
-			
-			while(true) {
-				ErrorChecker.checkForMoreInput(source, "END OF FUNCTION");
-				Token token = source.next();
-				if(token.kind() == Kind.CLOSE_BRACE) break;
-			}
-			
-			try {
-				mustBe(Kind.PERIOD, "PERIOD");
-			} catch (FatalException e) {
-				System.err.println(e);
-				System.exit(-1);
-			}
-		} else {
-			System.err.println("MAIN FUNCTION NOT DECLARED");
-		}
-	} */
 	
 	private void declareVariable() throws NoSuchStatementException, SyntaxException {
 		Token type = source.next();
@@ -289,7 +238,7 @@ public class Interpreter {
 	private void runAssignment(Token var) throws SyntaxException {
 		Variable value;
 		try {
-			value = variables.get(var.lexeme());
+			value = variables.get(var);
 		} catch (NonexistantVariableException e1) {
 			throw new SyntaxException("MALFORMED PROGRAM; VARIABLE ASSIGNMENT BEFORE DECLARATION", var);
 		}
@@ -470,7 +419,7 @@ public class Interpreter {
 			}
 		} else if(token.kind() == Kind.IDENT) {
 			try {
-				return variables.get(token.lexeme());
+				return variables.get(token);
 			} catch (NonexistantVariableException e) {
 				throw new SyntaxException("UNKNOWN VARIABLE", token);
 			}

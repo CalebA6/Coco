@@ -9,11 +9,20 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
+import coco.Type;
 
-public class Sum extends Traversible {
+public class Sum extends CheckableNode {
 	
-	private List<Product> operands = new ArrayList<>();
+	private List<Node> operands = new ArrayList<>();
 	private ArrayList<Token> operations = new ArrayList<>();
+	
+	// Increment
+	public Sum(Node var, Token op) {
+		operands.add(var);
+		Token add = new Token("+", op.lineNumber(), op.charPosition());
+		operations.add(add);
+		operands.add(new Literal(new Token("1", op.lineNumber(), op.charPosition())));
+	}
 
 	public Sum(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
 		operands.add(new Product(source, variables));
@@ -29,6 +38,14 @@ public class Sum extends Traversible {
 		}
 	}
 	
+	public void checkFunctionCalls(AST parent) {
+		for(Node operand: operands) {
+			if(operand instanceof CheckableNode) {
+				((CheckableNode) operand).checkFunctionCalls(parent);
+			}
+		}
+	}
+	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
 		if(operations.size() > 0) {
@@ -38,20 +55,31 @@ public class Sum extends Traversible {
 				if(operation.kind() == Kind.ADD) {
 					print.append("Addition\n");
 				} else if(operation.kind() == Kind.SUB) { 
-					print.append("Subtract\n");
+					print.append("Subtraction\n");
 				} else if(operation.kind() == Kind.OR) {
 					print.append("LogicalOr\n");
 				} else {
 					print.append(operation.kind());
 					print.append("\n");
 				}
-				operands.get(opIndex).printPreOrder(level+opIndex+1);
+				print.append(operands.get(opIndex).printPreOrder(level+opIndex+1));
 			}
-			operands.get(operations.size()).printPreOrder(level+operations.size());
+			print.append(operands.get(operations.size()).printPreOrder(level+operations.size()));
 		} else {
 			print.append(operands.get(0).printPreOrder(level));
 		}
 		return print.toString();
 	}
+	
+	/* public Type getType() {
+		int state = 0;
+		for(int opPos=0; opPos<operands.size(); ++opPos) {
+			Node operand = operands.get(opPos);
+			if(operand.getType() == Type.ERROR) return operand.getType();
+			if(operand.getType() == Type.VOID) {
+				Type 
+			}
+		}
+	} */
 	
 }

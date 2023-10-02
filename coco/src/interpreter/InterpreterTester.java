@@ -1,8 +1,10 @@
-package coco;
+package interpreter;
 
 import java.io.*;
 
 import org.apache.commons.cli.*;
+
+import coco.Scanner;
 
 public class InterpreterTester {
 

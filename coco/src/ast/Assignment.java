@@ -8,24 +8,29 @@ import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 
-public class Assignment extends Traversible {
+public class Assignment extends CheckableNode {
 	
-	Designator assignee;
-	String type;
+	NamedNode assignee;
 	Token operation;
-	Relation operand = null;
+	CheckableNode operand = null;
 
 	public Assignment(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
-		assignee = new Designator(source, variables);
-		type = variables.get(assignee.getName());
+		assignee = (NamedNode)new Designator(source, variables).genAST();
 		ErrorChecker.checkForMoreInput(source, "assignment operator");
 		Token assignOp = source.next();
 		operation = assignOp;
 		if((assignOp.kind() == Kind.ASSIGN) || (assignOp.kind() == Kind.ADD_ASSIGN) || (assignOp.kind() == Kind.SUB_ASSIGN) || (assignOp.kind() == Kind.MUL_ASSIGN) || (assignOp.kind() == Kind.DIV_ASSIGN) || (assignOp.kind() == Kind.MOD_ASSIGN) || (assignOp.kind() == Kind.POW_ASSIGN)) {
 			operand = new Relation(source, variables);
 		} else if((assignOp.kind() == Kind.UNI_INC) || (assignOp.kind() == Kind.UNI_DEC)) {
+			operand = new Sum(assignee, assignOp);
 		} else {
 			throw new SyntaxException("Expected assignment operator but got " + assignOp.kind() + " .", assignOp);
+		}
+	}
+	
+	public void checkFunctionCalls(AST parent) {
+		if(operand != null) {
+			operand.checkFunctionCalls(parent);
 		}
 	}
 	
@@ -33,14 +38,9 @@ public class Assignment extends Traversible {
 		StringBuilder print = new StringBuilder();
 		addLevel(level, print);
 		print.append("Assignment\n");
-		addLevel(level+1, print);
-		print.append(assignee.getName().lexeme());
-		print.append(":");
-		print.append(type);
-		print.append("\n");
+		print.append(assignee.printPreOrder(level+1));
 		if(operand != null) {
-			addLevel(level+1, print);
-			operand.printPreOrder(level+1);
+			print.append(operand.printPreOrder(level+1));
 		}
 		return print.toString();
 	}

@@ -1,8 +1,9 @@
-package coco;
+package interpreter;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import coco.Token;
 import coco.Token.Kind;
 
 public class Variable {

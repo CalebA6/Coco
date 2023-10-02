@@ -1,5 +1,8 @@
 package ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
 import coco.RedefinitionException;
@@ -9,7 +12,7 @@ import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 
-public class FunctionDeclaration extends Traversible {
+public class FunctionDeclaration extends CheckableNode {
 	
 	private Token name;
 	private Parameters parameters;
@@ -27,9 +30,9 @@ public class FunctionDeclaration extends Traversible {
 		if((type.kind() != Kind.VOID) && (type.kind() != Kind.BOOL) && (type.kind() != Kind.INT) && (type.kind() != Kind.FLOAT)) {
 			throw new SyntaxException("Expected void or type but got " + type.kind() + ".", type);
 		}
+		variables.add(name, parameters + "->" + type.lexeme());
 		action = new FunctionBody(source, variables);
 		variables.exitLevel();
-		variables.add(name, parameters + "->" + type.lexeme());
 	}
 	
 	public Token getName() {
@@ -38,6 +41,10 @@ public class FunctionDeclaration extends Traversible {
 	
 	public Parameters getParameters() {
 		return parameters;
+	}
+	
+	public void checkFunctionCalls(AST parent) {
+		action.checkFunctionCalls(parent);
 	}
 	
 	public String printPreOrder(int level) {
