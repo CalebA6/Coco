@@ -9,6 +9,7 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Variables;
 import types.Type;
+import types.TypeChecker;
 
 public class VariableDeclarations extends Node {
 
@@ -24,12 +25,12 @@ public class VariableDeclarations extends Node {
 		}
 	}
 	
-	public int line() {
-		return varDeclarations.get(0).line();
+	public int lineNumber() {
+		return varDeclarations.get(0).lineNumber();
 	}
 	
-	public int charPos() {
-		return varDeclarations.get(0).charPos();
+	public int charPosition() {
+		return varDeclarations.get(0).charPosition();
 	}
 	
 	public VariableDeclarations getAST() {
@@ -42,6 +43,8 @@ public class VariableDeclarations extends Node {
 	public Type getType() {
 		return Type.VOID;
 	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) { }
 	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();

@@ -9,6 +9,7 @@ import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
 import types.Type;
+import types.TypeChecker;
 
 public class FunctionBody extends Node {
 	
@@ -25,11 +26,11 @@ public class FunctionBody extends Node {
 		ErrorChecker.mustBe(Kind.SEMICOLON, "SEMICOLON", source);
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return start.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return start.charPosition();
 	}
 	
@@ -39,6 +40,10 @@ public class FunctionBody extends Node {
 	
 	public Type getType() {
 		return statements.getType();
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		statements.checkType(reporter, returnType);
 	}
 	
 	public String printPreOrder(int level) {

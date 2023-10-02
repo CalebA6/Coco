@@ -1,8 +1,10 @@
 package ast;
 
+import coco.Location;
 import types.Type;
+import types.TypeChecker;
 
-abstract class Node {
+abstract class Node implements Location {
 	
 	public Node genAST() {
 		return this;
@@ -19,9 +21,10 @@ abstract class Node {
 		}
 	}
 	
-	abstract public int line();
-	abstract public int charPos();
+	abstract public int lineNumber();
+	abstract public int charPosition();
 	
 	abstract public Type getType();
+	abstract public void checkType(TypeChecker reporter, Type returnType);
 	
 }

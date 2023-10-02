@@ -8,6 +8,7 @@ import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
 import types.Type;
+import types.TypeChecker;
 
 public class Not extends CheckableNode {
 	
@@ -20,11 +21,11 @@ public class Not extends CheckableNode {
 		relation = new Relation(source, variables);
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return not.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return not.charPosition();
 	}
 	
@@ -34,6 +35,14 @@ public class Not extends CheckableNode {
 	
 	public Type getType() {
 		return Type.BOOL;
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		if(relation.getType() != Type.BOOL) {
+			Type error = Type.ERROR;
+			error.setError(relation, "Value must be BOOL to apply not.");
+			reporter.reportError(error);
+		}
 	}
 	
 	public String printPreOrder(int level) {

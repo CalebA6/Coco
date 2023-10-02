@@ -5,6 +5,7 @@ import java.util.List;
 import coco.Token;
 import types.ArrayAccessException;
 import types.Type;
+import types.TypeChecker;
 
 public class ArrayIndex extends NamedNode {
 
@@ -22,11 +23,11 @@ public class ArrayIndex extends NamedNode {
 		}
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return start.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return start.charPosition();
 	}
 	
@@ -43,6 +44,21 @@ public class ArrayIndex extends NamedNode {
 			type.setError(start, "Array access on non-array type");
 		}
 		return type;
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		if(getType() == Type.ERROR) {
+			reporter.reportError(getType());
+		}
+		
+		if(index.getType() != Type.INT) {
+			Type error = Type.ERROR;
+			error.setError(index, "Array index must be integer");
+			reporter.reportError(error);
+		}
+		
+		item.checkType(reporter, returnType);
+		index.checkType(reporter, returnType);
 	}
 	
 	public String printPreOrder(int level) {

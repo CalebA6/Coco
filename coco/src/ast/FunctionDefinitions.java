@@ -12,6 +12,7 @@ import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 import types.Type;
+import types.TypeChecker;
 
 public class FunctionDefinitions extends CheckableNode {
 	
@@ -26,11 +27,11 @@ public class FunctionDefinitions extends CheckableNode {
 		}
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return first.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return first.charPosition();
 	}
 	
@@ -47,6 +48,12 @@ public class FunctionDefinitions extends CheckableNode {
 	
 	public Type getType() {
 		return Type.VOID;
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		for(FunctionDeclaration function: functions) {
+			function.checkType(reporter, returnType);
+		}
 	}
 	
 	public String printPreOrder(int level) {

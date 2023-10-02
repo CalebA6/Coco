@@ -10,6 +10,7 @@ import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 import types.Type;
+import types.TypeChecker;
 
 public class Relation extends CheckableNode {
 	
@@ -30,12 +31,12 @@ public class Relation extends CheckableNode {
 		}
 	}
 	
-	public int line() {
-		return operands.get(0).line();
+	public int lineNumber() {
+		return operands.get(0).lineNumber();
 	}
 	
-	public int charPos() {
-		return operands.get(0).charPos();
+	public int charPosition() {
+		return operands.get(0).charPosition();
 	}
 	
 	public void checkFunctionCalls(AST parent) {
@@ -58,6 +59,10 @@ public class Relation extends CheckableNode {
 	
 	public Type getType() {
 		return Type.BOOL;
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		throw new RuntimeException("Relation is not in AST and should not be typechecked.");
 	}
 	
 	public String printPreOrder(int level) {

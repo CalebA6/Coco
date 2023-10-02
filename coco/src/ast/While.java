@@ -8,6 +8,7 @@ import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
 import types.Type;
+import types.TypeChecker;
 
 public class While extends CheckableNode {
 	
@@ -26,11 +27,11 @@ public class While extends CheckableNode {
 		ErrorChecker.mustBe(Kind.OD, "OD", source);
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return start.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return start.charPosition();
 	}
 	
@@ -41,6 +42,16 @@ public class While extends CheckableNode {
 	
 	public Type getType() {
 		return action.getType();
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		if(decision.getType() != Type.BOOL) {
+			Type error = Type.ERROR;
+			error.setError(decision, "While decision block must have BOOL type.");
+			reporter.reportError(error);
+		}
+		
+		action.checkType(reporter, returnType);
 	}
 	
 	public String printPreOrder(int level) {

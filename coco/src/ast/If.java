@@ -8,6 +8,7 @@ import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
 import types.Type;
+import types.TypeChecker;
 
 public class If extends CheckableNode {
 	
@@ -42,11 +43,11 @@ public class If extends CheckableNode {
 		ErrorChecker.mustBe(Kind.FI, "FI", source);
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return statement.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return statement.charPosition();
 	}
 	
@@ -62,6 +63,18 @@ public class If extends CheckableNode {
 		if(action.getType() != Type.VOID) return action.getType();
 		if(inaction.getType() != Type.VOID) return inaction.getType();
 		return Type.VOID;
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		if(decision.getType() != Type.BOOL) {
+			Type error = Type.ERROR;
+			error.setError(decision, "If decision block must have BOOL type.");
+			reporter.reportError(error);
+		}
+		
+		decision.checkType(reporter, returnType);
+		action.checkType(reporter, returnType);
+		if(inaction != null) inaction.checkType(reporter, returnType);
 	}
 	
 	public String printPreOrder(int level) {

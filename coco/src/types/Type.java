@@ -1,5 +1,6 @@
 package types;
 
+import coco.Location;
 import coco.Token;
 
 public enum Type {
@@ -18,7 +19,7 @@ public enum Type {
 		--dimensions;
 	}
 	
-	public void setError(Token location, String message) {
+	public void setError(Location location, String message) {
 		this.message = "TypeError(" + location.lineNumber() + "," + location.charPosition() + ")[" + message + "]";
 	}
 	

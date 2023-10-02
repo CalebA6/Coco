@@ -2,6 +2,7 @@ package ast;
 
 import coco.Token;
 import types.Type;
+import types.TypeChecker;
 
 public class Variable extends NamedNode {
 
@@ -13,11 +14,11 @@ public class Variable extends NamedNode {
 		this.type = type;
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return name.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return name.charPosition();
 	}
 	
@@ -28,6 +29,8 @@ public class Variable extends NamedNode {
 	public Type getType() {
 		return Type.fromString(type, name);
 	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) { }
 	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();

@@ -7,6 +7,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
 import types.Type;
+import types.TypeChecker;
 import coco.Variables;
 
 public class Return extends CheckableNode {
@@ -25,11 +26,11 @@ public class Return extends CheckableNode {
 		}
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return start.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return start.charPosition();
 	}
 	
@@ -40,6 +41,10 @@ public class Return extends CheckableNode {
 	public Type getType() {
 		if(value == null) return Type.VOID;
 		return value.getType();
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		value.checkType(reporter, returnType);
 	}
 	
 	public String printPreOrder(int level) {

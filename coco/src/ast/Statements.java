@@ -11,6 +11,7 @@ import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 import types.Type;
+import types.TypeChecker;
 
 public class Statements extends CheckableNode {
 	
@@ -27,12 +28,12 @@ public class Statements extends CheckableNode {
 		} while((next.kind() != Kind.CLOSE_BRACE) && (next.kind() != Kind.FI) && (next.kind() != Kind.ELSE) && (next.kind() != Kind.OD) && (next.kind() != Kind.UNTIL));
 	}
 	
-	public int line() {
-		return statements.get(0).line();
+	public int lineNumber() {
+		return statements.get(0).lineNumber();
 	}
 	
-	public int charPos() {
-		return statements.get(0).charPos();
+	public int charPosition() {
+		return statements.get(0).charPosition();
 	}
 	
 	public void checkFunctionCalls(AST parent) {
@@ -48,6 +49,12 @@ public class Statements extends CheckableNode {
 			}
 		}
 		return Type.VOID;
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		for(Node statement: statements) {
+			statement.checkType(reporter, returnType);
+		}
 	}
 	
 	public String printPreOrder(int level) {

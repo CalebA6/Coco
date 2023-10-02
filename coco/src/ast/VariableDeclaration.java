@@ -11,6 +11,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import types.Type;
+import types.TypeChecker;
 import coco.Token.Kind;
 
 public class VariableDeclaration extends Node {
@@ -59,17 +60,19 @@ public class VariableDeclaration extends Node {
 		}
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return type.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return type.charPosition();
 	}
 	
 	public Type getType() {
 		return Type.fromToken(type);
 	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) { }
 	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();

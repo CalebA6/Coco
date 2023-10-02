@@ -7,6 +7,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import types.Type;
+import types.TypeChecker;
 import coco.Token.Kind;
 
 public class Assignment extends CheckableNode {
@@ -29,11 +30,11 @@ public class Assignment extends CheckableNode {
 		}
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return operation.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return operation.charPosition();
 	}
 	
@@ -45,6 +46,25 @@ public class Assignment extends CheckableNode {
 	
 	public Type getType() {
 		return assignee.getType();
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		if(operand != null) {
+			if(assignee.getType() != operand.getType()) {
+				Type error = Type.ERROR;
+				error.setError(operation, "Cannot set " + operand.getType() + " to " + assignee.getType());
+				reporter.reportError(error);
+			}
+		} else {
+			if((assignee.getType() != Type.INT) && (assignee.getType() != Type.FLOAT)) {
+				Type error = Type.ERROR;
+				error.setError(operation, "Cannot increment " + assignee.getType());
+				reporter.reportError(error);
+			}
+		}
+		
+		assignee.checkType(reporter, returnType);
+		if(operand != null) operand.checkType(reporter, returnType);
 	}
 	
 	public String printPreOrder(int level) {

@@ -9,6 +9,7 @@ import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 import types.Type;
+import types.TypeChecker;
 
 public class FunctionDeclaration extends CheckableNode {
 	
@@ -33,11 +34,11 @@ public class FunctionDeclaration extends CheckableNode {
 		variables.exitLevel();
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return name.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return name.charPosition();
 	}
 	
@@ -55,6 +56,18 @@ public class FunctionDeclaration extends CheckableNode {
 	
 	public Type getType() {
 		return Type.fromToken(type);
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		Type definedType = Type.fromToken(this.type);
+		/* Type returnedType = action.getType();
+		if(definedType != returnedType) {
+			Type error = Type.ERROR;
+			error.setError(this.type, definedType + " does not match returned type of " + returnedType);
+			reporter.reportError(error);
+		} */
+		
+		action.checkType(reporter, definedType);
 	}
 	
 	public String printPreOrder(int level) {

@@ -3,7 +3,7 @@ package coco;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Token {
+public class Token implements Location {
 
     public enum Kind {
         // boolean operators

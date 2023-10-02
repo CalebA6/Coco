@@ -11,6 +11,7 @@ import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
 import types.Type;
+import types.TypeChecker;
 
 public class Designator extends Node {
 
@@ -43,11 +44,11 @@ public class Designator extends Node {
 		}
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return name.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return name.charPosition();
 	}
 	
@@ -57,6 +58,10 @@ public class Designator extends Node {
 	
 	public Type getType() {
 		return Type.fromString(type, name);
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		throw new RuntimeException("Designator is not in AST and should not be typechecked.");
 	}
 	
 	public String printPreOrder(int level) {

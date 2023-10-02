@@ -11,6 +11,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import types.Type;
+import types.TypeChecker;
 import coco.Token.Kind;
 
 public class FunctionCall extends CheckableNode {
@@ -47,11 +48,11 @@ public class FunctionCall extends CheckableNode {
 		}
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return function.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return function.charPosition();
 	}
 	
@@ -73,6 +74,17 @@ public class FunctionCall extends CheckableNode {
 		Type error = Type.ERROR;
 		error.setError(function, "No such function");
 		return error;
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		Type error = getType();
+		if(error == Type.ERROR) {
+			reporter.reportError(error);
+		}
+		
+		for(Relation parameter: parameters) {
+			parameter.checkType(reporter, returnType);
+		}
 	}
 	
 	public String printPreOrder(int level) {

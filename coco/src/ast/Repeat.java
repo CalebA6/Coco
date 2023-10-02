@@ -7,6 +7,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import types.Type;
+import types.TypeChecker;
 import coco.Token.Kind;
 
 public class Repeat extends CheckableNode {
@@ -25,11 +26,11 @@ public class Repeat extends CheckableNode {
 		ErrorChecker.mustBe(Kind.CLOSE_PAREN, "CLOSE_PAREN", source);
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return start.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return start.charPosition();
 	}
 	
@@ -40,6 +41,10 @@ public class Repeat extends CheckableNode {
 	
 	public Type getType() {
 		return action.getType();
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		action.checkType(reporter, returnType);
 	}
 	
 	public String printPreOrder(int level) {

@@ -3,6 +3,7 @@ package ast;
 import coco.Token;
 import coco.Token.Kind;
 import types.Type;
+import types.TypeChecker;
 
 public class Literal extends CheckableNode {
 
@@ -12,11 +13,11 @@ public class Literal extends CheckableNode {
 		this.literal = literal;
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return literal.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return literal.charPosition();
 	}
 	
@@ -25,6 +26,8 @@ public class Literal extends CheckableNode {
 	public Type getType() {
 		return Type.fromToken(literal);
 	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) { }
 	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();

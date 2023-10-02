@@ -1,7 +1,9 @@
 package ast;
 
 import coco.Token;
+import coco.Token.Kind;
 import types.Type;
+import types.TypeChecker;
 
 public class Operation extends CheckableNode {
 	
@@ -17,11 +19,11 @@ public class Operation extends CheckableNode {
 		this.opToken = opToken;
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return opToken.lineNumber();
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return opToken.lineNumber();
 	}
 	
@@ -36,6 +38,29 @@ public class Operation extends CheckableNode {
 		} else {
 			return left.getType();
 		}
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		if(opToken.kind() == Kind.AND || opToken.kind() == Kind.OR) {
+			Node[] operands = {left, right};
+			for(Node operand: operands) {
+				if(operand.getType() != Type.BOOL) {
+					Type error = Type.ERROR;
+					error.setError(operand, "Operands of " + operation + " operation must be BOOL.");
+				}
+			}
+		} else {
+			Node[] operands = {left, right};
+			for(Node operand: operands) {
+				if(operand.getType() != Type.INT && operand.getType() != Type.FLOAT) {
+					Type error = Type.ERROR;
+					error.setError(operand, "Operands of " + operation + " operation must be numerical.");
+				}
+			}
+		}
+		
+		left.checkType(reporter, returnType);
+		right.checkType(reporter, returnType);
 	}
 	
 	public String printPreOrder(int level) {

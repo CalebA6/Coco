@@ -9,6 +9,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import types.Type;
+import types.TypeChecker;
 import coco.Token.Kind;
 
 public class Sum extends CheckableNode {
@@ -38,12 +39,12 @@ public class Sum extends CheckableNode {
 		}
 	}
 	
-	public int line() {
-		return operands.get(0).line();
+	public int lineNumber() {
+		return operands.get(0).lineNumber();
 	}
 	
-	public int charPos() {
-		return operands.get(0).charPos();
+	public int charPosition() {
+		return operands.get(0).charPosition();
 	}
 	
 	public void checkFunctionCalls(AST parent) {
@@ -68,6 +69,10 @@ public class Sum extends CheckableNode {
 	
 	public Type getType() {
 		return operands.get(0).getType();
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		throw new RuntimeException("Sum is not in AST and should not be typechecked.");
 	}
 	
 	public String printPreOrder(int level) {

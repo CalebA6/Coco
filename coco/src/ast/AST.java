@@ -11,6 +11,7 @@ import coco.Scanner;
 import coco.SyntaxException;
 import coco.Variables;
 import types.Type;
+import types.TypeChecker;
 import coco.Token.Kind;
 
 public class AST extends Node {
@@ -94,16 +95,22 @@ public class AST extends Node {
 		}
 	}
 	
-	public int line() {
+	public int lineNumber() {
 		return 0;
 	}
 	
-	public int charPos() {
+	public int charPosition() {
 		return 0;
 	}
 	
 	public Type getType() {
 		return Type.VOID;
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType) {
+		if(varDeclarations != null) varDeclarations.checkType(reporter, returnType);
+		if(functions != null) functions.checkType(reporter, returnType);
+		if(action != null) action.checkType(reporter, returnType);
 	}
 	
 	public boolean hasError() {
