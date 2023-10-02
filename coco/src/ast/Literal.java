@@ -2,6 +2,7 @@ package ast;
 
 import coco.Token;
 import coco.Token.Kind;
+import types.Type;
 
 public class Literal extends CheckableNode {
 
@@ -20,6 +21,10 @@ public class Literal extends CheckableNode {
 	}
 	
 	public void checkFunctionCalls(AST parent) { }
+	
+	public Type getType() {
+		return Type.fromToken(literal);
+	}
 	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();

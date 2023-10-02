@@ -6,6 +6,7 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
+import types.Type;
 import coco.Variables;
 
 public class Return extends CheckableNode {
@@ -34,6 +35,11 @@ public class Return extends CheckableNode {
 	
 	public void checkFunctionCalls(AST parent) {
 		if(value != null) value.checkFunctionCalls(parent);
+	}
+	
+	public Type getType() {
+		if(value == null) return Type.VOID;
+		return value.getType();
 	}
 	
 	public String printPreOrder(int level) {

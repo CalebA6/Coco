@@ -8,6 +8,7 @@ import coco.RedefinitionException;
 import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Variables;
+import types.Type;
 
 public class VariableDeclarations extends Node {
 
@@ -36,6 +37,10 @@ public class VariableDeclarations extends Node {
 			return null;
 		}
 		return this;
+	}
+	
+	public Type getType() {
+		return Type.VOID;
 	}
 	
 	public String printPreOrder(int level) {

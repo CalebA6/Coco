@@ -1,6 +1,7 @@
 package ast;
 
 import coco.Token;
+import types.Type;
 
 public class Variable extends NamedNode {
 
@@ -22,6 +23,10 @@ public class Variable extends NamedNode {
 	
 	public Token getName() {
 		return name;
+	}
+	
+	public Type getType() {
+		return Type.fromString(type, name);
 	}
 	
 	public String printPreOrder(int level) {

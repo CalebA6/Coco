@@ -7,6 +7,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
+import types.Type;
 
 public class If extends CheckableNode {
 	
@@ -55,6 +56,12 @@ public class If extends CheckableNode {
 		if(inaction != null) {
 			inaction.checkFunctionCalls(parent);
 		}
+	}
+	
+	public Type getType() {
+		if(action.getType() != Type.VOID) return action.getType();
+		if(inaction.getType() != Type.VOID) return inaction.getType();
+		return Type.VOID;
 	}
 	
 	public String printPreOrder(int level) {

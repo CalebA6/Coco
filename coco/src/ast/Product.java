@@ -8,6 +8,7 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import types.Type;
 import coco.Token.Kind;
 
 public class Product extends CheckableNode {
@@ -53,6 +54,10 @@ public class Product extends CheckableNode {
 		} else {
 			return operands.get(0).genAST();
 		}
+	}
+	
+	public Type getType() {
+		return operands.get(0).getType();
 	}
 	
 	public String printPreOrder(int level) {

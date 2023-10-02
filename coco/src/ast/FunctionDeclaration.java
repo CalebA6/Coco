@@ -8,6 +8,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
+import types.Type;
 
 public class FunctionDeclaration extends CheckableNode {
 	
@@ -50,6 +51,10 @@ public class FunctionDeclaration extends CheckableNode {
 	
 	public void checkFunctionCalls(AST parent) {
 		action.checkFunctionCalls(parent);
+	}
+	
+	public Type getType() {
+		return Type.fromToken(type);
 	}
 	
 	public String printPreOrder(int level) {

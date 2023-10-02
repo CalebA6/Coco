@@ -9,6 +9,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
+import types.Type;
 
 public class Relation extends CheckableNode {
 	
@@ -53,6 +54,10 @@ public class Relation extends CheckableNode {
 		} else {
 			return operands.get(0).genAST();
 		}
+	}
+	
+	public Type getType() {
+		return Type.BOOL;
 	}
 	
 	public String printPreOrder(int level) {

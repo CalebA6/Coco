@@ -7,6 +7,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
+import types.Type;
 
 public class Not extends CheckableNode {
 	
@@ -29,6 +30,10 @@ public class Not extends CheckableNode {
 	
 	public void checkFunctionCalls(AST parent) {
 		relation.checkFunctionCalls(parent);
+	}
+	
+	public Type getType() {
+		return Type.BOOL;
 	}
 	
 	public String printPreOrder(int level) {

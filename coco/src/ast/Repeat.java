@@ -6,6 +6,7 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import types.Type;
 import coco.Token.Kind;
 
 public class Repeat extends CheckableNode {
@@ -35,6 +36,10 @@ public class Repeat extends CheckableNode {
 	public void checkFunctionCalls(AST parent) {
 		action.checkFunctionCalls(parent);
 		decision.checkFunctionCalls(parent);
+	}
+	
+	public Type getType() {
+		return action.getType();
 	}
 	
 	public String printPreOrder(int level) {

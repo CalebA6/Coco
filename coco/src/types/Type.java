@@ -51,9 +51,13 @@ public enum Type {
 			case VOID: 
 				return Type.VOID;
 			case BOOL: 
+			case TRUE: 
+			case FALSE: 
 				return Type.BOOL;
+			case INT_VAL: 
 			case INT: 
 				return Type.INT;
+			case FLOAT_VAL: 
 			case FLOAT: 
 				return Type.FLOAT;
 			default: 

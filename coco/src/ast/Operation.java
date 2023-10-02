@@ -1,6 +1,7 @@
 package ast;
 
 import coco.Token;
+import types.Type;
 
 public class Operation extends CheckableNode {
 	
@@ -27,6 +28,14 @@ public class Operation extends CheckableNode {
 	public void checkFunctionCalls(AST parent) {
 		if(left instanceof CheckableNode) ((CheckableNode) left).checkFunctionCalls(parent);
 		if(right instanceof CheckableNode) ((CheckableNode) right).checkFunctionCalls(parent);
+	}
+	
+	public Type getType() {
+		if(operation.startsWith("Relation")) {
+			return Type.BOOL;
+		} else {
+			return left.getType();
+		}
 	}
 	
 	public String printPreOrder(int level) {

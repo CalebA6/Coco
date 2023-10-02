@@ -10,6 +10,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
+import types.Type;
 
 public class Statements extends CheckableNode {
 	
@@ -38,6 +39,15 @@ public class Statements extends CheckableNode {
 		for(CheckableNode statement: statements) {
 			statement.checkFunctionCalls(parent);
 		}
+	}
+	
+	public Type getType() {
+		for(Node statement: statements) {
+			if(statement instanceof Return) {
+				return statement.getType();
+			}
+		}
+		return Type.VOID;
 	}
 	
 	public String printPreOrder(int level) {

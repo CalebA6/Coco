@@ -7,6 +7,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
+import types.Type;
 
 public class While extends CheckableNode {
 	
@@ -36,6 +37,10 @@ public class While extends CheckableNode {
 	public void checkFunctionCalls(AST parent) {
 		decision.checkFunctionCalls(parent);
 		action.checkFunctionCalls(parent);
+	}
+	
+	public Type getType() {
+		return action.getType();
 	}
 	
 	public String printPreOrder(int level) {

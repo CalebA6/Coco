@@ -34,7 +34,7 @@ public class ArrayIndex extends NamedNode {
 		return item.getName();
 	}
 	
-	/* public Type getType() {
+	public Type getType() {
 		Type type = item.getType();
 		try {
 			type.decrementDimensions();
@@ -43,7 +43,7 @@ public class ArrayIndex extends NamedNode {
 			type.setError(start, "Array access on non-array type");
 		}
 		return type;
-	} */
+	}
 	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();

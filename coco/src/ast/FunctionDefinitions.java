@@ -11,6 +11,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
+import types.Type;
 
 public class FunctionDefinitions extends CheckableNode {
 	
@@ -42,6 +43,10 @@ public class FunctionDefinitions extends CheckableNode {
 		for(FunctionDeclaration function: functions) {
 			function.checkFunctionCalls(parent);
 		}
+	}
+	
+	public Type getType() {
+		return Type.VOID;
 	}
 	
 	public String printPreOrder(int level) {

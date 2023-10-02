@@ -10,6 +10,7 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import types.Type;
 import coco.Token.Kind;
 
 public class FunctionCall extends CheckableNode {
@@ -60,6 +61,18 @@ public class FunctionCall extends CheckableNode {
 		} catch(NonexistantVariableException e) {
 			parent.reportError(e);
 		}
+	}
+	
+	public Type getType() {
+		String paramsType = parameters.toString();
+		for(String type: types) {
+			if(type.contains(paramsType)) {
+				return Type.fromString(type.split("->")[1], function);
+			}
+		}
+		Type error = Type.ERROR;
+		error.setError(function, "No such function");
+		return error;
 	}
 	
 	public String printPreOrder(int level) {

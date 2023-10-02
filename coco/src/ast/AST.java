@@ -10,6 +10,7 @@ import coco.ReversibleScanner;
 import coco.Scanner;
 import coco.SyntaxException;
 import coco.Variables;
+import types.Type;
 import coco.Token.Kind;
 
 public class AST extends Node {
@@ -99,6 +100,10 @@ public class AST extends Node {
 	
 	public int charPos() {
 		return 0;
+	}
+	
+	public Type getType() {
+		return Type.VOID;
 	}
 	
 	public boolean hasError() {

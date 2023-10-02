@@ -22,6 +22,6 @@ abstract class Node {
 	abstract public int line();
 	abstract public int charPos();
 	
-	// abstract public Type getType();
+	abstract public Type getType();
 	
 }

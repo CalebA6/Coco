@@ -10,6 +10,7 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import types.Type;
 import coco.Token.Kind;
 
 public class VariableDeclaration extends Node {
@@ -64,6 +65,10 @@ public class VariableDeclaration extends Node {
 	
 	public int charPos() {
 		return type.charPosition();
+	}
+	
+	public Type getType() {
+		return Type.fromToken(type);
 	}
 	
 	public String printPreOrder(int level) {

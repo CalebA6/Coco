@@ -10,6 +10,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
+import types.Type;
 
 public class Designator extends Node {
 
@@ -52,6 +53,10 @@ public class Designator extends Node {
 	
 	public Token getName() {
 		return name;
+	}
+	
+	public Type getType() {
+		return Type.fromString(type, name);
 	}
 	
 	public String printPreOrder(int level) {

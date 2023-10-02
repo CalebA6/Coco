@@ -8,6 +8,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
+import types.Type;
 
 public class FunctionBody extends Node {
 	
@@ -34,6 +35,10 @@ public class FunctionBody extends Node {
 	
 	public void checkFunctionCalls(AST parent) {
 		statements.checkFunctionCalls(parent);
+	}
+	
+	public Type getType() {
+		return statements.getType();
 	}
 	
 	public String printPreOrder(int level) {
