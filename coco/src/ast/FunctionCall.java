@@ -46,6 +46,14 @@ public class FunctionCall extends CheckableNode {
 		}
 	}
 	
+	public int line() {
+		return function.lineNumber();
+	}
+	
+	public int charPos() {
+		return function.charPosition();
+	}
+	
 	public void checkFunctionCalls(AST parent) {
 		try {
 			types = variables.get(function);

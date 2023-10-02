@@ -26,6 +26,14 @@ public class Statements extends CheckableNode {
 		} while((next.kind() != Kind.CLOSE_BRACE) && (next.kind() != Kind.FI) && (next.kind() != Kind.ELSE) && (next.kind() != Kind.OD) && (next.kind() != Kind.UNTIL));
 	}
 	
+	public int line() {
+		return statements.get(0).line();
+	}
+	
+	public int charPos() {
+		return statements.get(0).charPos();
+	}
+	
 	public void checkFunctionCalls(AST parent) {
 		for(CheckableNode statement: statements) {
 			statement.checkFunctionCalls(parent);

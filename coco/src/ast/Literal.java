@@ -11,6 +11,14 @@ public class Literal extends CheckableNode {
 		this.literal = literal;
 	}
 	
+	public int line() {
+		return literal.lineNumber();
+	}
+	
+	public int charPos() {
+		return literal.charPosition();
+	}
+	
 	public void checkFunctionCalls(AST parent) { }
 	
 	public String printPreOrder(int level) {

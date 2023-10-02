@@ -93,6 +93,14 @@ public class AST extends Node {
 		}
 	}
 	
+	public int line() {
+		return 0;
+	}
+	
+	public int charPos() {
+		return 0;
+	}
+	
 	public boolean hasError() {
 		return !error.isEmpty();
 	}

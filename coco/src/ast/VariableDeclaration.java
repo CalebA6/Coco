@@ -58,6 +58,14 @@ public class VariableDeclaration extends Node {
 		}
 	}
 	
+	public int line() {
+		return type.lineNumber();
+	}
+	
+	public int charPos() {
+		return type.charPosition();
+	}
+	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
 		for(Token identifier: identifiers) {

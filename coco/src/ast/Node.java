@@ -1,6 +1,6 @@
 package ast;
 
-import coco.Type;
+import types.Type;
 
 abstract class Node {
 	
@@ -18,6 +18,9 @@ abstract class Node {
 			print.append("  ");
 		}
 	}
+	
+	abstract public int line();
+	abstract public int charPos();
 	
 	// abstract public Type getType();
 	

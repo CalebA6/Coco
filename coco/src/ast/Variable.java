@@ -12,6 +12,14 @@ public class Variable extends NamedNode {
 		this.type = type;
 	}
 	
+	public int line() {
+		return name.lineNumber();
+	}
+	
+	public int charPos() {
+		return name.charPosition();
+	}
+	
 	public Token getName() {
 		return name;
 	}

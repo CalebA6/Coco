@@ -28,6 +28,14 @@ public class Assignment extends CheckableNode {
 		}
 	}
 	
+	public int line() {
+		return operation.lineNumber();
+	}
+	
+	public int charPos() {
+		return operation.charPosition();
+	}
+	
 	public void checkFunctionCalls(AST parent) {
 		if(operand != null) {
 			operand.checkFunctionCalls(parent);

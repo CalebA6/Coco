@@ -23,6 +23,14 @@ public class VariableDeclarations extends Node {
 		}
 	}
 	
+	public int line() {
+		return varDeclarations.get(0).line();
+	}
+	
+	public int charPos() {
+		return varDeclarations.get(0).charPos();
+	}
+	
 	public VariableDeclarations getAST() {
 		if(varDeclarations.isEmpty()) {
 			return null;

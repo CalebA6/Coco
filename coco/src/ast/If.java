@@ -10,12 +10,14 @@ import coco.Variables;
 
 public class If extends CheckableNode {
 	
+	private Token statement;
 	private Relation decision;
 	private Statements action;
 	private Statements inaction = null;
 
 	public If(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
 		ErrorChecker.mustBe(Kind.IF, "IF", source);
+		statement = source.last();
 		ErrorChecker.mustBe(Kind.OPEN_PAREN, "OPEN_PAREN", source);
 		decision = new Relation(source, variables);
 		ErrorChecker.mustBe(Kind.CLOSE_PAREN, "CLOSE_PAREN", source);
@@ -37,6 +39,14 @@ public class If extends CheckableNode {
 		}
 		
 		ErrorChecker.mustBe(Kind.FI, "FI", source);
+	}
+	
+	public int line() {
+		return statement.lineNumber();
+	}
+	
+	public int charPos() {
+		return statement.charPosition();
 	}
 	
 	public void checkFunctionCalls(AST parent) {

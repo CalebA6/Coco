@@ -1,8 +1,5 @@
 package ast;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
 import coco.RedefinitionException;
@@ -33,6 +30,14 @@ public class FunctionDeclaration extends CheckableNode {
 		variables.add(name, parameters + "->" + type.lexeme());
 		action = new FunctionBody(source, variables);
 		variables.exitLevel();
+	}
+	
+	public int line() {
+		return name.lineNumber();
+	}
+	
+	public int charPos() {
+		return name.charPosition();
 	}
 	
 	public Token getName() {

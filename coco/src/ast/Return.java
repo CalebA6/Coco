@@ -11,15 +11,25 @@ import coco.Variables;
 public class Return extends CheckableNode {
 	
 	private Relation value;
+	private Token start;
 
 	public Return(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
 		ErrorChecker.mustBe(Kind.RETURN, "RETURN", source);
+		start = source.last();
 		Token next = source.peek();
 		if(next.kind() == Kind.SEMICOLON) {
 			value = null;
 		} else {
 			value = new Relation(source, variables);
 		}
+	}
+	
+	public int line() {
+		return start.lineNumber();
+	}
+	
+	public int charPos() {
+		return start.charPosition();
 	}
 	
 	public void checkFunctionCalls(AST parent) {

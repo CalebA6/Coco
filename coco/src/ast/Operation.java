@@ -1,15 +1,27 @@
 package ast;
 
+import coco.Token;
+
 public class Operation extends CheckableNode {
 	
 	private Node left;
 	private Node right;
 	private String operation;
+	private Token opToken;
 	
-	public Operation(Node left, Node right, String operation) {
+	public Operation(Node left, Node right, String operation, Token opToken) {
 		this.left = left;
 		this.right = right;
 		this.operation = operation;
+		this.opToken = opToken;
+	}
+	
+	public int line() {
+		return opToken.lineNumber();
+	}
+	
+	public int charPos() {
+		return opToken.lineNumber();
 	}
 	
 	public void checkFunctionCalls(AST parent) {

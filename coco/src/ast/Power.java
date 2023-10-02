@@ -30,6 +30,14 @@ public class Power extends CheckableNode {
 		}
 	}
 	
+	public int line() {
+		return operands.get(0).line();
+	}
+	
+	public int charPos() {
+		return operands.get(0).charPos();
+	}
+	
 	public void checkFunctionCalls(AST parent) {
 		for(Node operand: operands) {
 			if(operand instanceof CheckableNode) {
@@ -40,9 +48,9 @@ public class Power extends CheckableNode {
 	
 	public Node genAST() {
 		if(operations.size() > 0) {
-			Operation current = new Operation(operands.get(0), operands.get(1), operationString(operations.get(0)));
+			Operation current = new Operation(operands.get(0), operands.get(1), operationString(operations.get(0)), operations.get(0));
 			for(int op=1; op<operations.size(); ++op) {
-				current = new Operation(current, operands.get(op+1), operationString(operations.get(op)));
+				current = new Operation(current, operands.get(op+1), operationString(operations.get(op)), operations.get(op));
 			}
 			return current;
 		} else {

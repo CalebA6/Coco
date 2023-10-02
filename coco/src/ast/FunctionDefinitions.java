@@ -8,18 +8,29 @@ import coco.NonexistantVariableException;
 import coco.RedefinitionException;
 import coco.ReversibleScanner;
 import coco.SyntaxException;
+import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
 
 public class FunctionDefinitions extends CheckableNode {
 	
 	private List<FunctionDeclaration> functions = new ArrayList<>();
+	private Token first;
 	
 	public FunctionDefinitions(ReversibleScanner source, Variables variables) throws SyntaxException, RedefinitionException, NonexistantVariableException {
+		first = source.peek();
 		while(source.peek().kind() == Kind.FUNC) {
 			functions.add(new FunctionDeclaration(source, variables));
 			ErrorChecker.checkForMoreInput(source, "OPEN_BRACE");
 		}
+	}
+	
+	public int line() {
+		return first.lineNumber();
+	}
+	
+	public int charPos() {
+		return first.charPosition();
 	}
 	
 	public FunctionDefinitions genAST() {
