@@ -13,12 +13,12 @@ import coco.Token.Kind;
 
 public class Statements extends CheckableNode {
 	
-	private List<Statement> statements = new ArrayList<>();
+	private List<CheckableNode> statements = new ArrayList<>();
 
 	public Statements(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
 		Token next;
 		do {
-			statements.add(new Statement(source, variables));
+			statements.add(genStatement(source, variables));
 			
 			ErrorChecker.mustBe(Kind.SEMICOLON, "SEMICOLON", source);
 			
@@ -27,7 +27,7 @@ public class Statements extends CheckableNode {
 	}
 	
 	public void checkFunctionCalls(AST parent) {
-		for(Statement statement: statements) {
+		for(CheckableNode statement: statements) {
 			statement.checkFunctionCalls(parent);
 		}
 	}
@@ -36,10 +36,34 @@ public class Statements extends CheckableNode {
 		StringBuilder print = new StringBuilder();
 		addLevel(level, print);
 		print.append("StatementSequence\n");
-		for(Statement statement: statements) {
+		for(Node statement: statements) {
 			print.append(statement.printPreOrder(level+1));
 		}
 		return print.toString();
+	}
+	
+	private CheckableNode genStatement(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
+		CheckableNode statement;
+		
+		ErrorChecker.checkForMoreInput(source, "STATEMENT");
+		Token token = source.peek();
+		if(token.kind() == Kind.IDENT) {
+			statement = new Assignment(source, variables);
+		} else if(token.kind() == Kind.CALL) {
+			statement = new FunctionCall(source, variables);
+		} else if(token.kind() == Kind.IF) {
+			statement = new If(source, variables);
+		} else if(token.kind() == Kind.WHILE) {
+			statement = new While(source, variables);
+		} else if(token.kind() == Kind.REPEAT) {
+			statement = new Repeat(source, variables);
+		} else if(token.kind() == Kind.RETURN) {
+			statement = new Return(source, variables);
+		} else {
+			throw new SyntaxException("Expected statement but got " + token.kind() + ".", token);
+		}
+		
+		return statement;
 	}
 	
 }

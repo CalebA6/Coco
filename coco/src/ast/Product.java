@@ -35,6 +35,18 @@ public class Product extends CheckableNode {
 		}
 	}
 	
+	public Node genAST() {
+		if(operations.size() > 0) {
+			Operation current = new Operation(operands.get(0), operands.get(1), operationString(operations.get(0)));
+			for(int op=1; op<operations.size(); ++op) {
+				current = new Operation(current, operands.get(op+1), operationString(operations.get(op)));
+			}
+			return current;
+		} else {
+			return operands.get(0).genAST();
+		}
+	}
+	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
 		if(operations.size() > 0) {
@@ -60,6 +72,20 @@ public class Product extends CheckableNode {
 			print.append(operands.get(0).printPreOrder(level));
 		}
 		return print.toString();
+	}
+	
+	private String operationString(Token operation) {
+		if(operation.kind() == Kind.MUL) {
+			return "Multiplication";
+		} else if(operation.kind() == Kind.DIV) { 
+			return "Division";
+		} else if(operation.kind() == Kind.MOD) {
+			return "Modulo";
+		} else if(operation.kind() == Kind.AND) {
+			return "LogicalAnd";
+		} else {
+			return operation.kind().name();
+		}
 	}
 	
 }

@@ -36,6 +36,18 @@ public class Relation extends CheckableNode {
 		}
 	}
 	
+	public Node genAST() {
+		if(operations.size() > 0) {
+			Operation current = new Operation(operands.get(0), operands.get(1), "Relation[" + operations.get(0).lexeme() + "]");
+			for(int op=1; op<operations.size(); ++op) {
+				current = new Operation(current, operands.get(op+1), "Relation[" + operations.get(op).lexeme() + "]");
+			}
+			return current;
+		} else {
+			return operands.get(0).genAST();
+		}
+	}
+	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
 		if(operations.size() > 0) {

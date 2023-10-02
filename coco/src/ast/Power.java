@@ -38,6 +38,18 @@ public class Power extends CheckableNode {
 		}
 	}
 	
+	public Node genAST() {
+		if(operations.size() > 0) {
+			Operation current = new Operation(operands.get(0), operands.get(1), operationString(operations.get(0)));
+			for(int op=1; op<operations.size(); ++op) {
+				current = new Operation(current, operands.get(op+1), operationString(operations.get(op)));
+			}
+			return current;
+		} else {
+			return operands.get(0).genAST();
+		}
+	}
+	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
 		if(operations.size() > 0) {
@@ -79,6 +91,14 @@ public class Power extends CheckableNode {
 			return new FunctionCall(source, variables);
 		} else {
 			throw new SyntaxException("Expected group but got " + token.kind() + ".", token);
+		}
+	}
+	
+	private String operationString(Token operation) {
+		if(operation.kind() == Kind.POW) {
+			return "Power";
+		} else {
+			return operation.kind().name();
 		}
 	}
 	

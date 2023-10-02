@@ -3,13 +3,15 @@ package ast;
 import coco.Token;
 import coco.Token.Kind;
 
-public class Literal extends Node {
+public class Literal extends CheckableNode {
 
 	private Token literal;
 	
 	public Literal(Token literal) {
 		this.literal = literal;
 	}
+	
+	public void checkFunctionCalls(AST parent) { }
 	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
