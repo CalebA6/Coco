@@ -67,20 +67,26 @@ public class FunctionCall extends CheckableNode {
 		} catch(NonexistantVariableException e) {
 			parent.reportError(e);
 		}
+		
+		for(Node parameter: parameters) {
+			if(parameter instanceof CheckableNode) ((CheckableNode) parameter).checkFunctionCalls(parent);
+		}
 	}
 	
 	public Type getType() {
-		for(String type: types) {
-			String[] typeParts = type.split("->");
-			String paramTypes = typeParts[0];
-			String returnType = typeParts[1];
-			TypeList possibleParameters = TypeList.fromString(paramTypes, call);
-			boolean correct = possibleParameters.size() == parameters.size();
-			for(int p=0; p<parameters.size(); ++p) {
-				correct &= parameters.get(p).getType().equals(possibleParameters.get(p));
-			}
-			if(correct) {
-				return Type.fromString(returnType, this);
+		if(types != null) {
+			for(String type: types) {
+				String[] typeParts = type.split("->");
+				String paramTypes = typeParts[0];
+				String returnType = typeParts[1];
+				TypeList possibleParameters = TypeList.fromString(paramTypes, call);
+				boolean correct = possibleParameters.size() == parameters.size();
+				for(int p=0; p<parameters.size()&&correct; ++p) {
+					correct &= parameters.get(p).getType().equals(possibleParameters.get(p));
+				}
+				if(correct) {
+					return Type.fromString(returnType, this);
+				}
 			}
 		}
 		ErrorType error = new ErrorType();
@@ -88,14 +94,14 @@ public class FunctionCall extends CheckableNode {
 		return error;
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
-		for(Node parameter: parameters) {
-			parameter.checkType(reporter, returnType);
-		}
-		
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		Type error = getType();
 		if(ErrorType.is(error)) {
 			reporter.reportError((ErrorType) error);
+		}
+
+		for(Node parameter: parameters) {
+			parameter.checkType(reporter, returnType, functionName);
 		}
 	}
 	

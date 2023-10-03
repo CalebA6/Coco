@@ -45,10 +45,10 @@ public class Repeat extends CheckableNode {
 		return action.getType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
-		action.checkType(reporter, returnType);
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
+		action.checkType(reporter, returnType, functionName);
 		
-		decision.checkType(reporter, returnType);
+		decision.checkType(reporter, returnType, functionName);
 		if(!BoolType.is(decision.getType())) {
 			ErrorType error = new ErrorType();
 			error.setError(start, "RepeatStat requires bool condition not " + decision.getType() + ".");

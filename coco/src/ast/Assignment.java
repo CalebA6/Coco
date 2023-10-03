@@ -51,9 +51,8 @@ public class Assignment extends CheckableNode {
 		return assignee.getType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		if(assignee instanceof ArrayIndex) ((ArrayIndex) assignee).setLocation(operation);
-		assignee.checkType(reporter, returnType);
 		
 		if(operand != null) {
 			if(!assignee.getType().equals(operand.getType())) {
@@ -68,8 +67,9 @@ public class Assignment extends CheckableNode {
 				reporter.reportError(error);
 			}
 		}
-		
-		if(operand != null) operand.checkType(reporter, returnType);
+
+		assignee.checkType(reporter, returnType, functionName);
+		if(operand != null) operand.checkType(reporter, returnType, functionName);
 	}
 	
 	public String printPreOrder(int level) {

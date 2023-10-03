@@ -27,7 +27,7 @@ public class Literal extends CheckableNode {
 		return Type.fromToken(literal);
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) { }
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) { }
 	
 	@Override
 	public String toString() {

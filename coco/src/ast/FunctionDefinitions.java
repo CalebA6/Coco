@@ -51,9 +51,9 @@ public class FunctionDefinitions extends CheckableNode {
 		return new VoidType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		for(FunctionDeclaration function: functions) {
-			function.checkType(reporter, returnType);
+			function.checkType(reporter, returnType, functionName);
 		}
 	}
 	

@@ -61,7 +61,7 @@ public class Product extends CheckableNode {
 		return operands.get(0).getType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		throw new RuntimeException("Product is not in AST and should not be typechecked.");
 	}
 	

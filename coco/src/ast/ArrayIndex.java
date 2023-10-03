@@ -80,13 +80,13 @@ public class ArrayIndex extends NamedNode {
 		return type;
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		if(ErrorType.is(getType())) {
 			reporter.reportError((ErrorType) getType());
 		}
 
-		index.checkType(reporter, returnType);
-		item.checkType(reporter, returnType);
+		index.checkType(reporter, returnType, functionName);
+		item.checkType(reporter, returnType, functionName);
 	}
 	
 	@Override

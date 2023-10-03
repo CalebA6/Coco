@@ -30,7 +30,7 @@ public class Variable extends NamedNode {
 		return Type.fromString(type, name);
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) { }
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) { }
 	
 	@Override
 	public String toString() {

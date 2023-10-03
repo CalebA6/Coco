@@ -46,14 +46,14 @@ public class While extends CheckableNode {
 		return action.getType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		if(!BoolType.is(decision.getType())) {
 			ErrorType error = new ErrorType();
-			error.setError(decision, "WhileStat requires bool condition not " + decision.getType() + ".");
+			error.setError(this, "WhileStat requires bool condition not " + decision.getType() + ".");
 			reporter.reportError(error);
 		}
 		
-		action.checkType(reporter, returnType);
+		action.checkType(reporter, returnType, functionName);
 	}
 	
 	public String printPreOrder(int level) {

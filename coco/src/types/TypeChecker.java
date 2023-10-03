@@ -10,7 +10,7 @@ public class TypeChecker {
 	private List<ErrorType> errors = new ArrayList<>();
 	
 	public boolean check(AST ast) {
-		ast.checkType(this, new VoidType());
+		ast.checkType(this, new VoidType(), "main");
 		return errors.isEmpty();
 	}
 	

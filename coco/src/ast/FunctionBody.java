@@ -42,8 +42,8 @@ public class FunctionBody extends Node {
 		return statements.getType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
-		statements.checkType(reporter, returnType);
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
+		statements.checkType(reporter, returnType, functionName);
 	}
 	
 	public String printPreOrder(int level) {

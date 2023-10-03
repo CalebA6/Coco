@@ -39,7 +39,7 @@ public class Not extends CheckableNode {
 		return new BoolType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		if(!BoolType.is(relation.getType())) {
 			ErrorType error = new ErrorType();
 			error.setError(relation, "Value must be BOOL to apply not.");

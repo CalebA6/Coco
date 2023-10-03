@@ -25,6 +25,6 @@ public abstract class Node implements Location {
 	abstract public int charPosition();
 	
 	abstract public Type getType();
-	abstract public void checkType(TypeChecker reporter, Type returnType);
+	abstract public void checkType(TypeChecker reporter, Type returnType, String functionName);
 	
 }

@@ -65,7 +65,7 @@ public class Designator extends Node {
 		return Type.fromString(type, name);
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		throw new RuntimeException("Designator is not in AST and should not be typechecked.");
 	}
 	

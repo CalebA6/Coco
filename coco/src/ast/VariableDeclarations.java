@@ -45,9 +45,9 @@ public class VariableDeclarations extends Node {
 		return new VoidType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		for(VariableDeclaration declaration: varDeclarations) {
-			declaration.checkType(reporter, returnType);
+			declaration.checkType(reporter, returnType, functionName);
 		}
 	}
 	

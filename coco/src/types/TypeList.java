@@ -21,7 +21,10 @@ public class TypeList {
 	@Override
 	public String toString() {
 		StringBuilder list = new StringBuilder();
-		list.append("TypeList(");
+		if(types.length > 1) {
+			list.append("TypeList");
+		}
+		list.append("(");
 		boolean first = true;
 		for(Type type: types) {
 			if(first) {

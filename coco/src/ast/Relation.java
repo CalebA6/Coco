@@ -62,7 +62,7 @@ public class Relation extends CheckableNode {
 		return new BoolType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		throw new RuntimeException("Relation is not in AST and should not be typechecked.");
 	}
 	

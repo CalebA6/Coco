@@ -108,10 +108,10 @@ public class AST extends Node {
 		return new VoidType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
-		if(varDeclarations != null) varDeclarations.checkType(reporter, returnType);
-		if(functions != null) functions.checkType(reporter, returnType);
-		if(action != null) action.checkType(reporter, returnType);
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
+		if(varDeclarations != null) varDeclarations.checkType(reporter, returnType, functionName);
+		if(functions != null) functions.checkType(reporter, returnType, functionName);
+		if(action != null) action.checkType(reporter, returnType, functionName);
 	}
 	
 	public boolean hasError() {

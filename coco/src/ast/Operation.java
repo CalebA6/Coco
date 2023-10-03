@@ -39,7 +39,7 @@ public class Operation extends CheckableNode {
 		if(opToken.kind() == Kind.AND || opToken.kind() == Kind.OR) {
 			if(!BoolType.is(left.getType()) || !BoolType.is(right.getType())) {
 				ErrorType error = new ErrorType();
-				error.setError(opToken, "Cannot " + opName(opToken) + " " + left.getType().toString().toLowerCase() + " to " + right.getType().toString().toLowerCase() + ".");
+				error.setError(opToken, "Cannot " + opName(opToken) + " " + left.getType().toString() + " to " + right.getType().toString() + ".");
 				return error;
 			} else {
 				return new BoolType();
@@ -48,22 +48,26 @@ public class Operation extends CheckableNode {
 			if(!NumberType.is(left.getType()) || !NumberType.is(right.getType())) {
 				ErrorType error = new ErrorType();
 				String opAction = opName(opToken).equals("compare") ? " with " : " to ";
-				error.setError(opToken, "Cannot " + opName(opToken) + " " + left.getType().toString().toLowerCase() + opAction + right.getType().toString().toLowerCase() + ".");
+				error.setError(opToken, "Cannot " + opName(opToken) + " " + left.getType().toString() + opAction + right.getType().toString() + ".");
 				return error;
 			} else {
-				return left.getType();
+				if(operation.startsWith("Relation")) {
+					return new BoolType();
+				} else {
+					return left.getType();
+				}
 			}
 		}
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		Type opType = getType();
 		if(opType instanceof ErrorType) {
 			reporter.reportError((ErrorType) opType);
 		}
 		
-		left.checkType(reporter, returnType);
-		right.checkType(reporter, returnType);
+		left.checkType(reporter, returnType, functionName);
+		right.checkType(reporter, returnType, functionName);
 	}
 	
 	public String printPreOrder(int level) {

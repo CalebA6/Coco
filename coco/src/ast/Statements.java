@@ -52,9 +52,9 @@ public class Statements extends CheckableNode {
 		return new VoidType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		for(Node statement: statements) {
-			statement.checkType(reporter, returnType);
+			statement.checkType(reporter, returnType, functionName);
 		}
 	}
 	

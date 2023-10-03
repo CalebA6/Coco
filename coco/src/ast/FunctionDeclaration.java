@@ -58,7 +58,7 @@ public class FunctionDeclaration extends CheckableNode {
 		return Type.fromToken(type);
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		Type definedType = Type.fromToken(this.type);
 		/* Type returnedType = action.getType();
 		if(definedType != returnedType) {
@@ -67,7 +67,7 @@ public class FunctionDeclaration extends CheckableNode {
 			reporter.reportError(error);
 		} */
 		
-		action.checkType(reporter, definedType);
+		action.checkType(reporter, definedType, name.lexeme());
 	}
 	
 	public String printPreOrder(int level) {

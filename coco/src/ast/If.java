@@ -16,7 +16,7 @@ import types.VoidType;
 public class If extends CheckableNode {
 	
 	private Token statement;
-	private Relation decision;
+	private Node decision;
 	private Statements action;
 	private Statements inaction = null;
 
@@ -24,7 +24,7 @@ public class If extends CheckableNode {
 		ErrorChecker.mustBe(Kind.IF, "IF", source);
 		statement = source.last();
 		ErrorChecker.mustBe(Kind.OPEN_PAREN, "OPEN_PAREN", source);
-		decision = new Relation(source, variables);
+		decision = new Relation(source, variables).genAST();
 		ErrorChecker.mustBe(Kind.CLOSE_PAREN, "CLOSE_PAREN", source);
 		ErrorChecker.mustBe(Kind.THEN, "THEN", source);
 		variables.enterLevel();
@@ -55,7 +55,7 @@ public class If extends CheckableNode {
 	}
 	
 	public void checkFunctionCalls(AST parent) {
-		decision.checkFunctionCalls(parent);
+		if(decision instanceof CheckableNode) ((CheckableNode) decision).checkFunctionCalls(parent);
 		action.checkFunctionCalls(parent);
 		if(inaction != null) {
 			inaction.checkFunctionCalls(parent);
@@ -68,16 +68,16 @@ public class If extends CheckableNode {
 		return new VoidType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		if(!BoolType.is(decision.getType())) {
 			ErrorType error = new ErrorType();
-			error.setError(decision, "If decision block must have BOOL type.");
+			error.setError(decision, "IfStat requires bool condition not " + decision.getType() + ".");
 			reporter.reportError(error);
 		}
 		
-		decision.checkType(reporter, returnType);
-		action.checkType(reporter, returnType);
-		if(inaction != null) inaction.checkType(reporter, returnType);
+		decision.checkType(reporter, returnType, functionName);
+		action.checkType(reporter, returnType, functionName);
+		if(inaction != null) inaction.checkType(reporter, returnType, functionName);
 	}
 	
 	public String printPreOrder(int level) {

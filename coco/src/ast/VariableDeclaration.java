@@ -78,7 +78,7 @@ public class VariableDeclaration extends Node {
 		return type;
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) {
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		for(Token dimension: arrayDimensions) {
 			if((dimension.kind() != Kind.INT_VAL)) {
 				ErrorType error = new ErrorType();
