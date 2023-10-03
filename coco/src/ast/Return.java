@@ -49,7 +49,7 @@ public class Return extends CheckableNode {
 		if(value != null) value.checkType(reporter, returnType, functionName);
 		
 		if(value == null) {
-			if(!returnType.equals(value.getType())) {
+			if(!VoidType.is(returnType)) {
 				ErrorType error = new ErrorType();
 				error.setError(this, "Function " + functionName + " returns " + value.getType() + " instead of " + returnType + ".");
 				reporter.reportError(error);

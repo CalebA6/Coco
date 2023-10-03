@@ -71,7 +71,7 @@ public class If extends CheckableNode {
 	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		if(!BoolType.is(decision.getType())) {
 			ErrorType error = new ErrorType();
-			error.setError(decision, "IfStat requires bool condition not " + decision.getType() + ".");
+			error.setError(this, "IfStat requires bool condition not " + decision.getType() + ".");
 			reporter.reportError(error);
 		}
 		

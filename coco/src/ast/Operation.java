@@ -39,7 +39,7 @@ public class Operation extends CheckableNode {
 		if(opToken.kind() == Kind.AND || opToken.kind() == Kind.OR) {
 			if(!BoolType.is(left.getType()) || !BoolType.is(right.getType())) {
 				ErrorType error = new ErrorType();
-				error.setError(opToken, "Cannot " + opName(opToken) + " " + left.getType().toString() + " to " + right.getType().toString() + ".");
+				error.setError(opToken, "Cannot " + toString(opToken, left.getType().toString(), right.getType().toString()) + ".");
 				return error;
 			} else {
 				return new BoolType();
@@ -47,8 +47,7 @@ public class Operation extends CheckableNode {
 		} else {
 			if(!NumberType.is(left.getType()) || !NumberType.is(right.getType())) {
 				ErrorType error = new ErrorType();
-				String opAction = opName(opToken).equals("compare") ? " with " : " to ";
-				error.setError(opToken, "Cannot " + opName(opToken) + " " + left.getType().toString() + opAction + right.getType().toString() + ".");
+				error.setError(opToken, "Cannot " + toString(opToken, left.getType().toString(), right.getType().toString()) + ".");
 				return error;
 			} else {
 				if(operation.startsWith("Relation")) {
@@ -80,14 +79,16 @@ public class Operation extends CheckableNode {
 		return print.toString();
 	}
 	
-	private String opName(Token op) {
+	private String toString(Token op, String left, String right) {
 		switch(op.kind()) {
 			case ADD: 
-				return "add";
+				return "add " + left + " to " + right;
+			case SUB: 
+				return "subtract " + right + " from " + left;
 			case EQUAL_TO: 
-				return "compare";
+				return "compare " + left + " with " + right;
 			default: 
-				return op.kind().name();
+				return op.kind().name() + " " + left + " to " + right;
 		}
 	}
 	
