@@ -59,7 +59,7 @@ public class Assignment extends CheckableNode {
 				reporter.reportError(error);
 			}
 		} else {
-			if(IntType.is(assignee.getType()) && FloatType.is(assignee.getType())) {
+			if(!IntType.is(assignee.getType()) && !FloatType.is(assignee.getType())) {
 				ErrorType error = new ErrorType();
 				error.setError(operation, "Cannot increment " + assignee.getType());
 				reporter.reportError(error);

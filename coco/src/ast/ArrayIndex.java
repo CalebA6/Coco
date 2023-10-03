@@ -53,7 +53,7 @@ public class ArrayIndex extends NamedNode {
 			reporter.reportError((ErrorType) getType());
 		}
 		
-		if(IntType.is(index.getType())) {
+		if(!IntType.is(index.getType())) {
 			ErrorType error = new ErrorType();
 			error.setError(index, "Array index must be integer");
 			reporter.reportError(error);
