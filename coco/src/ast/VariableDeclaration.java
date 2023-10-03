@@ -94,7 +94,7 @@ public class VariableDeclaration extends Node {
 					break;
 				}
 			}
-			if(negative || zero) {
+			/* if(negative || zero) {
 				ErrorType error = new ErrorType();
 				StringBuilder vars = new StringBuilder();
 				for(Token name: identifiers) {
@@ -105,7 +105,7 @@ public class VariableDeclaration extends Node {
 				}
 				error.setError(this, "Array " + vars.toString() + " has invalid size " + dimension.lexeme());
 				reporter.reportError(error);
-			}
+			} */
 		}
 	}
 	

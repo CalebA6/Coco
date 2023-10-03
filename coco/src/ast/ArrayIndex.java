@@ -17,10 +17,10 @@ public class ArrayIndex extends NamedNode {
 	private Token start;
 	private String indexSize;
 	
-	private Location location = index;
+	private Location location;
 	
 	public ArrayIndex(NamedNode item, int index, List<Relation> indicies, List<Token> starts, String[] indexSizes) {
-		this.index = indicies.get(index).genAST();
+		location = this.index = indicies.get(index).genAST();
 		if(index >= indicies.size() - 1) {
 			start = starts.get(index);
 			indexSize = indexSizes[index];
@@ -48,21 +48,26 @@ public class ArrayIndex extends NamedNode {
 		this.location = location;
 	}
 	
+	public void checkFunctionCalls(AST parent) {
+		if(index instanceof CheckableNode) ((CheckableNode) index).checkFunctionCalls(parent);
+		item.checkFunctionCalls(parent);
+	}
+	
 	public Type getType() {
 		Type type = item.getType();
 		try {
 			type.decrementDimensions();
 		} catch (ArrayAccessException e) {
 			type = new ErrorType();
-			((ErrorType) type).setError(start, "Array access on non-array type");
+			((ErrorType) type).setError(start, "Cannot dereference " + type);
 		}
 		
 		if(!IntType.is(index.getType())) {
 			ErrorType error = new ErrorType();
-			error.setError(index, "Array index must be integer");
+			error.setError(index, "Cannot index " + item + " with " + index.getType() + ".");
 			type = error;
 		} else {
-			if(index instanceof Literal) {
+			/* if(index instanceof Literal) {
 				boolean outOfBounds = false;
 				int index = Integer.parseInt(this.index.toString());
 				if(index < 0) outOfBounds = true;
@@ -74,7 +79,7 @@ public class ArrayIndex extends NamedNode {
 					error.setError(location, "Array Index Out of Bounds : " + index + " for array " + item);
 					type = error;
 				}
-			}
+			} */
 		}
 		
 		return type;
