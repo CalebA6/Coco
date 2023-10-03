@@ -53,6 +53,9 @@ public class TypeList {
 		}
 		
 		String[] types = str.split(",");
+		if(str.equals("")) {
+			types = new String[0];
+		}
 		
 		TypeList typeList = new TypeList();
 		typeList.types = new Type[types.length];

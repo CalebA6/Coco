@@ -22,13 +22,13 @@ public class Type {
 		String[] split = str.split("\\[");
 		String basicType = split[0];
 		Type type;
-		if(basicType == "bool") {
+		if(basicType.equals("bool")) {
 			type = new BoolType();
-		} else if(basicType == "int") {
+		} else if(basicType.equals("int")) {
 			type = new IntType();
-		} else if(basicType == "float") {
+		} else if(basicType.equals("float")) {
 			type = new FloatType();
-		} else if(basicType == "void") {
+		} else if(basicType.equals("void")) {
 			type = new VoidType();
 		} else {
 			type = new ErrorType();

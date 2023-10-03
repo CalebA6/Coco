@@ -6,13 +6,15 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import types.BoolType;
+import types.ErrorType;
 import types.Type;
 import types.TypeChecker;
 import coco.Token.Kind;
 
 public class Repeat extends CheckableNode {
 
-	private Relation decision;
+	private Node decision;
 	private Statements action;
 	private Token start;
 
@@ -22,7 +24,7 @@ public class Repeat extends CheckableNode {
 		action = new Statements(source, variables);
 		ErrorChecker.mustBe(Kind.UNTIL, "UNTIL", source);
 		ErrorChecker.mustBe(Kind.OPEN_PAREN, "OPEN_PAREN", source);
-		decision = new Relation(source, variables);
+		decision = new Relation(source, variables).genAST();
 		ErrorChecker.mustBe(Kind.CLOSE_PAREN, "CLOSE_PAREN", source);
 	}
 	
@@ -36,7 +38,7 @@ public class Repeat extends CheckableNode {
 	
 	public void checkFunctionCalls(AST parent) {
 		action.checkFunctionCalls(parent);
-		decision.checkFunctionCalls(parent);
+		if(decision instanceof CheckableNode) ((CheckableNode) decision).checkFunctionCalls(parent);
 	}
 	
 	public Type getType() {
@@ -45,6 +47,13 @@ public class Repeat extends CheckableNode {
 	
 	public void checkType(TypeChecker reporter, Type returnType) {
 		action.checkType(reporter, returnType);
+		
+		decision.checkType(reporter, returnType);
+		if(!BoolType.is(decision.getType())) {
+			ErrorType error = new ErrorType();
+			error.setError(start, "RepeatStat requires bool condition not " + decision.getType() + ".");
+			reporter.reportError(error);
+		}
 	}
 	
 	public String printPreOrder(int level) {

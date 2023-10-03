@@ -14,7 +14,7 @@ import types.TypeChecker;
 
 public class While extends CheckableNode {
 	
-	private Relation decision;
+	private Node decision;
 	private Statements action;
 	private Token start;
 
@@ -22,7 +22,7 @@ public class While extends CheckableNode {
 		ErrorChecker.mustBe(Kind.WHILE, "WHILE", source);
 		start = source.last();
 		ErrorChecker.mustBe(Kind.OPEN_PAREN, "OPEN_PAREN", source);
-		decision = new Relation(source, variables);
+		decision = new Relation(source, variables).genAST();
 		ErrorChecker.mustBe(Kind.CLOSE_PAREN, "CLOSE_PAREN", source);
 		ErrorChecker.mustBe(Kind.DO, "DO", source);
 		action = new Statements(source, variables);
@@ -38,7 +38,7 @@ public class While extends CheckableNode {
 	}
 	
 	public void checkFunctionCalls(AST parent) {
-		decision.checkFunctionCalls(parent);
+		if(decision instanceof CheckableNode) ((CheckableNode) decision).checkFunctionCalls(parent);
 		action.checkFunctionCalls(parent);
 	}
 	
@@ -49,7 +49,7 @@ public class While extends CheckableNode {
 	public void checkType(TypeChecker reporter, Type returnType) {
 		if(!BoolType.is(decision.getType())) {
 			ErrorType error = new ErrorType();
-			error.setError(decision, "While decision block must have BOOL type.");
+			error.setError(decision, "WhileStat requires bool condition not " + decision.getType() + ".");
 			reporter.reportError(error);
 		}
 		

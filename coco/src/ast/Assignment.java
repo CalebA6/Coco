@@ -17,7 +17,7 @@ public class Assignment extends CheckableNode {
 	
 	NamedNode assignee;
 	Token operation;
-	CheckableNode operand = null;
+	Node operand = null;
 
 	public Assignment(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
 		assignee = (NamedNode)new Designator(source, variables).genAST();
@@ -25,9 +25,9 @@ public class Assignment extends CheckableNode {
 		Token assignOp = source.next();
 		operation = assignOp;
 		if((assignOp.kind() == Kind.ASSIGN) || (assignOp.kind() == Kind.ADD_ASSIGN) || (assignOp.kind() == Kind.SUB_ASSIGN) || (assignOp.kind() == Kind.MUL_ASSIGN) || (assignOp.kind() == Kind.DIV_ASSIGN) || (assignOp.kind() == Kind.MOD_ASSIGN) || (assignOp.kind() == Kind.POW_ASSIGN)) {
-			operand = new Relation(source, variables);
+			operand = new Relation(source, variables).genAST();
 		} else if((assignOp.kind() == Kind.UNI_INC) || (assignOp.kind() == Kind.UNI_DEC)) {
-			operand = new Sum(assignee, assignOp);
+			operand = new Sum(assignee, assignOp).genAST();
 		} else {
 			throw new SyntaxException("Expected assignment operator but got " + assignOp.kind() + " .", assignOp);
 		}
@@ -42,8 +42,8 @@ public class Assignment extends CheckableNode {
 	}
 	
 	public void checkFunctionCalls(AST parent) {
-		if(operand != null) {
-			operand.checkFunctionCalls(parent);
+		if(operand != null && operand instanceof CheckableNode) {
+			((CheckableNode) operand).checkFunctionCalls(parent);
 		}
 	}
 	
@@ -53,7 +53,7 @@ public class Assignment extends CheckableNode {
 	
 	public void checkType(TypeChecker reporter, Type returnType) {
 		if(operand != null) {
-			if(assignee.getType() != operand.getType()) {
+			if(!assignee.getType().equals(operand.getType())) {
 				ErrorType error = new ErrorType();
 				error.setError(operation, "Cannot set " + operand.getType() + " to " + assignee.getType());
 				reporter.reportError(error);

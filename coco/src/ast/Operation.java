@@ -47,7 +47,8 @@ public class Operation extends CheckableNode {
 		} else {
 			if(!NumberType.is(left.getType()) || !NumberType.is(right.getType())) {
 				ErrorType error = new ErrorType();
-				error.setError(opToken, "Cannot " + opName(opToken) + " " + left.getType().toString().toLowerCase() + " to " + right.getType().toString().toLowerCase() + ".");
+				String opAction = opName(opToken).equals("compare") ? " with " : " to ";
+				error.setError(opToken, "Cannot " + opName(opToken) + " " + left.getType().toString().toLowerCase() + opAction + right.getType().toString().toLowerCase() + ".");
 				return error;
 			} else {
 				return left.getType();
@@ -79,6 +80,8 @@ public class Operation extends CheckableNode {
 		switch(op.kind()) {
 			case ADD: 
 				return "add";
+			case EQUAL_TO: 
+				return "compare";
 			default: 
 				return op.kind().name();
 		}

@@ -54,11 +54,11 @@ public class FunctionCall extends CheckableNode {
 	}
 	
 	public int lineNumber() {
-		return function.lineNumber();
+		return call.lineNumber();
 	}
 	
 	public int charPosition() {
-		return function.charPosition();
+		return call.charPosition();
 	}
 	
 	public void checkFunctionCalls(AST parent) {
@@ -71,17 +71,20 @@ public class FunctionCall extends CheckableNode {
 	
 	public Type getType() {
 		for(String type: types) {
-			TypeList possibleParameters = TypeList.fromString(type, call);
+			String[] typeParts = type.split("->");
+			String paramTypes = typeParts[0];
+			String returnType = typeParts[1];
+			TypeList possibleParameters = TypeList.fromString(paramTypes, call);
 			boolean correct = possibleParameters.size() == parameters.size();
 			for(int p=0; p<parameters.size(); ++p) {
 				correct &= parameters.get(p).getType().equals(possibleParameters.get(p));
 			}
 			if(correct) {
-				return Type.fromString(type.split("->")[1], function);
+				return Type.fromString(returnType, this);
 			}
 		}
 		ErrorType error = new ErrorType();
-		error.setError(function, "Call with args " + TypeList.fromList(parameters) + " matches no function signature.");
+		error.setError(this, "Call with args " + TypeList.fromList(parameters) + " matches no function signature.");
 		return error;
 	}
 	
