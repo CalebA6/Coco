@@ -4,7 +4,7 @@ import coco.Location;
 import types.Type;
 import types.TypeChecker;
 
-abstract class Node implements Location {
+public abstract class Node implements Location {
 	
 	public Node genAST() {
 		return this;

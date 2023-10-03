@@ -4,6 +4,8 @@ import java.util.List;
 
 import coco.Token;
 import types.ArrayAccessException;
+import types.ErrorType;
+import types.IntType;
 import types.Type;
 import types.TypeChecker;
 
@@ -40,19 +42,19 @@ public class ArrayIndex extends NamedNode {
 		try {
 			type.decrementDimensions();
 		} catch (ArrayAccessException e) {
-			type = Type.ERROR;
-			type.setError(start, "Array access on non-array type");
+			type = new ErrorType();
+			((ErrorType) type).setError(start, "Array access on non-array type");
 		}
 		return type;
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType) {
-		if(getType() == Type.ERROR) {
-			reporter.reportError(getType());
+		if(ErrorType.is(getType())) {
+			reporter.reportError((ErrorType) getType());
 		}
 		
-		if(index.getType() != Type.INT) {
-			Type error = Type.ERROR;
+		if(IntType.is(index.getType())) {
+			ErrorType error = new ErrorType();
 			error.setError(index, "Array index must be integer");
 			reporter.reportError(error);
 		}

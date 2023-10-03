@@ -12,6 +12,7 @@ import coco.SyntaxException;
 import coco.Variables;
 import types.Type;
 import types.TypeChecker;
+import types.VoidType;
 import coco.Token.Kind;
 
 public class AST extends Node {
@@ -104,7 +105,7 @@ public class AST extends Node {
 	}
 	
 	public Type getType() {
-		return Type.VOID;
+		return new VoidType();
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType) {

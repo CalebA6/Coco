@@ -7,6 +7,8 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
+import types.BoolType;
+import types.ErrorType;
 import types.Type;
 import types.TypeChecker;
 
@@ -34,12 +36,12 @@ public class Not extends CheckableNode {
 	}
 	
 	public Type getType() {
-		return Type.BOOL;
+		return new BoolType();
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType) {
-		if(relation.getType() != Type.BOOL) {
-			Type error = Type.ERROR;
+		if(!BoolType.is(relation.getType())) {
+			ErrorType error = new ErrorType();
 			error.setError(relation, "Value must be BOOL to apply not.");
 			reporter.reportError(error);
 		}

@@ -8,6 +8,7 @@ import coco.Token;
 import coco.Token.Kind;
 import types.Type;
 import types.TypeChecker;
+import types.VoidType;
 import coco.Variables;
 
 public class Return extends CheckableNode {
@@ -39,7 +40,7 @@ public class Return extends CheckableNode {
 	}
 	
 	public Type getType() {
-		if(value == null) return Type.VOID;
+		if(value == null) return new VoidType();
 		return value.getType();
 	}
 	

@@ -13,6 +13,7 @@ import coco.Variables;
 import coco.Token.Kind;
 import types.Type;
 import types.TypeChecker;
+import types.VoidType;
 
 public class FunctionDefinitions extends CheckableNode {
 	
@@ -47,7 +48,7 @@ public class FunctionDefinitions extends CheckableNode {
 	}
 	
 	public Type getType() {
-		return Type.VOID;
+		return new VoidType();
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType) {

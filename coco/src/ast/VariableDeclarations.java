@@ -10,6 +10,7 @@ import coco.SyntaxException;
 import coco.Variables;
 import types.Type;
 import types.TypeChecker;
+import types.VoidType;
 
 public class VariableDeclarations extends Node {
 
@@ -41,7 +42,7 @@ public class VariableDeclarations extends Node {
 	}
 	
 	public Type getType() {
-		return Type.VOID;
+		return new VoidType();
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType) { }

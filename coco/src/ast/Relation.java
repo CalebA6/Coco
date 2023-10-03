@@ -9,6 +9,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import coco.Token.Kind;
+import types.BoolType;
 import types.Type;
 import types.TypeChecker;
 
@@ -47,9 +48,9 @@ public class Relation extends CheckableNode {
 	
 	public Node genAST() {
 		if(operations.size() > 0) {
-			Operation current = new Operation(operands.get(0), operands.get(1), "Relation[" + operations.get(0).lexeme() + "]", operations.get(0));
+			Operation current = new Operation(operands.get(0).genAST(), operands.get(1).genAST(), "Relation[" + operations.get(0).lexeme() + "]", operations.get(0));
 			for(int op=1; op<operations.size(); ++op) {
-				current = new Operation(current, operands.get(op+1), "Relation[" + operations.get(op).lexeme() + "]", operations.get(op));
+				current = new Operation(current, operands.get(op+1).genAST(), "Relation[" + operations.get(op).lexeme() + "]", operations.get(op));
 			}
 			return current;
 		} else {
@@ -58,7 +59,7 @@ public class Relation extends CheckableNode {
 	}
 	
 	public Type getType() {
-		return Type.BOOL;
+		return new BoolType();
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType) {

@@ -6,6 +6,9 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import types.ErrorType;
+import types.FloatType;
+import types.IntType;
 import types.Type;
 import types.TypeChecker;
 import coco.Token.Kind;
@@ -51,13 +54,13 @@ public class Assignment extends CheckableNode {
 	public void checkType(TypeChecker reporter, Type returnType) {
 		if(operand != null) {
 			if(assignee.getType() != operand.getType()) {
-				Type error = Type.ERROR;
+				ErrorType error = new ErrorType();
 				error.setError(operation, "Cannot set " + operand.getType() + " to " + assignee.getType());
 				reporter.reportError(error);
 			}
 		} else {
-			if((assignee.getType() != Type.INT) && (assignee.getType() != Type.FLOAT)) {
-				Type error = Type.ERROR;
+			if(IntType.is(assignee.getType()) && FloatType.is(assignee.getType())) {
+				ErrorType error = new ErrorType();
 				error.setError(operation, "Cannot increment " + assignee.getType());
 				reporter.reportError(error);
 			}

@@ -7,8 +7,11 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
+import types.BoolType;
+import types.ErrorType;
 import types.Type;
 import types.TypeChecker;
+import types.VoidType;
 
 public class If extends CheckableNode {
 	
@@ -60,14 +63,14 @@ public class If extends CheckableNode {
 	}
 	
 	public Type getType() {
-		if(action.getType() != Type.VOID) return action.getType();
-		if(inaction.getType() != Type.VOID) return inaction.getType();
-		return Type.VOID;
+		if(!VoidType.is(action.getType())) return action.getType();
+		if(!VoidType.is(inaction.getType())) return inaction.getType();
+		return new VoidType();
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType) {
-		if(decision.getType() != Type.BOOL) {
-			Type error = Type.ERROR;
+		if(!BoolType.is(decision.getType())) {
+			ErrorType error = new ErrorType();
 			error.setError(decision, "If decision block must have BOOL type.");
 			reporter.reportError(error);
 		}

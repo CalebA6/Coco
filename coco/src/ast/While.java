@@ -7,6 +7,8 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
+import types.BoolType;
+import types.ErrorType;
 import types.Type;
 import types.TypeChecker;
 
@@ -45,8 +47,8 @@ public class While extends CheckableNode {
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType) {
-		if(decision.getType() != Type.BOOL) {
-			Type error = Type.ERROR;
+		if(!BoolType.is(decision.getType())) {
+			ErrorType error = new ErrorType();
 			error.setError(decision, "While decision block must have BOOL type.");
 			reporter.reportError(error);
 		}

@@ -3,6 +3,7 @@ package coco;
 import java.io.*;
 import org.apache.commons.cli.*;
 
+
 public class CompilerTester {
 
     public static void main(String[] args) {
@@ -11,10 +12,11 @@ public class CompilerTester {
         options.addOption("i", "in", true, "Data File");
         options.addOption("nr", "reg", true, "Num Regs");
         options.addOption("b", "asm", false, "Print DLX instructions");
-        options.addOption("a", "astOut", false, "Print AST to screen");
+        options.addOption("a", "astOut", false, "Print AST");
 
         options.addOption("gDir", "graphDir", false, "Graph dir, default will be current dir");
-        options.addOption("ast", "ast", false, "Print AST.txt - requires graphs/");
+        options.addOption("ast", "ast", false, "Print AST.dot - requires graphs/");
+
 
 
         HelpFormatter formatter = new HelpFormatter();
@@ -43,7 +45,6 @@ public class CompilerTester {
             try {
                 in = new FileInputStream(inputFilename);
             }
-
             catch (IOException e) {
                 System.err.println("Error accessing the data file: \"" + inputFilename + "\"");
                 System.exit(-2);
@@ -70,37 +71,13 @@ public class CompilerTester {
         
         Compiler c = new Compiler(s, numRegs);
         ast.AST ast = c.genAST();
-        
-        String ast_text = ast.printPreOrder();
-        if (cmd.hasOption("a")) { // AST to Screen
-            System.out.println(ast_text);
-        }
+        types.TypeChecker tc = new types.TypeChecker();
 
-        // create graph dir if needed
-        String graphDir = "";
-        if (cmd.hasOption("graphDir")) {
-            graphDir = cmd.getOptionValue("graphDir");
-            File dir = new File(graphDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
+        if (!tc.check(ast)) {
+            System.out.println("Error type-checking file.");
+            System.out.println(tc.errorReport());
+            System.exit(-4);
         }
-
-
-        if (cmd.hasOption("ast")) {
-            String astFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_ast.txt";
-            try (PrintStream out = new PrintStream(astFile)) {
-                out.println(ast.printPreOrder());
-            } catch (IOException e) {
-                System.err.println("Error accessing the ast file: \"" + astFile + "\"");
-                System.exit(-7);
-            }
-        }
-
-        if (c.hasError()) {
-            System.out.println("Error parsing file.");
-            System.out.println(c.errorReport());
-            System.exit(-8);
-        }
+       
     }
 }

@@ -2,6 +2,9 @@ package ast;
 
 import coco.Token;
 import coco.Token.Kind;
+import types.BoolType;
+import types.ErrorType;
+import types.NumberType;
 import types.Type;
 import types.TypeChecker;
 
@@ -33,30 +36,29 @@ public class Operation extends CheckableNode {
 	}
 	
 	public Type getType() {
-		if(operation.startsWith("Relation")) {
-			return Type.BOOL;
+		if(opToken.kind() == Kind.AND || opToken.kind() == Kind.OR) {
+			if(!BoolType.is(left.getType()) || !BoolType.is(right.getType())) {
+				ErrorType error = new ErrorType();
+				error.setError(opToken, "Cannot " + opName(opToken) + " " + left.getType().toString().toLowerCase() + " to " + right.getType().toString().toLowerCase() + ".");
+				return error;
+			} else {
+				return new BoolType();
+			}
 		} else {
-			return left.getType();
+			if(!NumberType.is(left.getType()) || !NumberType.is(right.getType())) {
+				ErrorType error = new ErrorType();
+				error.setError(opToken, "Cannot " + opName(opToken) + " " + left.getType().toString().toLowerCase() + " to " + right.getType().toString().toLowerCase() + ".");
+				return error;
+			} else {
+				return left.getType();
+			}
 		}
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType) {
-		if(opToken.kind() == Kind.AND || opToken.kind() == Kind.OR) {
-			Node[] operands = {left, right};
-			for(Node operand: operands) {
-				if(operand.getType() != Type.BOOL) {
-					Type error = Type.ERROR;
-					error.setError(operand, "Operands of " + operation + " operation must be BOOL.");
-				}
-			}
-		} else {
-			Node[] operands = {left, right};
-			for(Node operand: operands) {
-				if(operand.getType() != Type.INT && operand.getType() != Type.FLOAT) {
-					Type error = Type.ERROR;
-					error.setError(operand, "Operands of " + operation + " operation must be numerical.");
-				}
-			}
+		Type opType = getType();
+		if(opType instanceof ErrorType) {
+			reporter.reportError((ErrorType) opType);
 		}
 		
 		left.checkType(reporter, returnType);
@@ -71,6 +73,15 @@ public class Operation extends CheckableNode {
 		print.append(left.printPreOrder(level+1));
 		print.append(right.printPreOrder(level+1));
 		return print.toString();
+	}
+	
+	private String opName(Token op) {
+		switch(op.kind()) {
+			case ADD: 
+				return "add";
+			default: 
+				return op.kind().name();
+		}
 	}
 	
 }

@@ -12,6 +12,7 @@ import coco.Variables;
 import coco.Token.Kind;
 import types.Type;
 import types.TypeChecker;
+import types.VoidType;
 
 public class Statements extends CheckableNode {
 	
@@ -48,7 +49,7 @@ public class Statements extends CheckableNode {
 				return statement.getType();
 			}
 		}
-		return Type.VOID;
+		return new VoidType();
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType) {

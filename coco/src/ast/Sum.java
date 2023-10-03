@@ -57,9 +57,9 @@ public class Sum extends CheckableNode {
 	
 	public Node genAST() {
 		if(operations.size() > 0) {
-			Operation current = new Operation(operands.get(0), operands.get(1), operationString(operations.get(0)), operations.get(0));
+			Operation current = new Operation(operands.get(0).genAST(), operands.get(1).genAST(), operationString(operations.get(0)), operations.get(0));
 			for(int op=1; op<operations.size(); ++op) {
-				current = new Operation(current, operands.get(op+1), operationString(operations.get(op)), operations.get(op));
+				current = new Operation(current, operands.get(op+1).genAST(), operationString(operations.get(op)), operations.get(op));
 			}
 			return current;
 		} else {

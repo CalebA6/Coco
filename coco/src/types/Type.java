@@ -3,10 +3,9 @@ package types;
 import coco.Location;
 import coco.Token;
 
-public enum Type {
-	ERROR, VOID, BOOL, INT, FLOAT;
+public class Type {
+	// ERROR, VOID, BOOL, INT, FLOAT;
 	private int dimensions = 0;
-	private String message;
 	
 	public int numDimensions() {
 		return dimensions;
@@ -19,30 +18,26 @@ public enum Type {
 		--dimensions;
 	}
 	
-	public void setError(Location location, String message) {
-		this.message = "TypeError(" + location.lineNumber() + "," + location.charPosition() + ")[" + message + "]";
-	}
-	
-	public static Type fromString(String str, Token location) {
-		String[] split = str.split("[");
+	public static Type fromString(String str, Location location) {
+		String[] split = str.split("\\[");
 		String basicType = split[0];
 		Type type;
 		if(basicType == "bool") {
-			type = Type.BOOL;
+			type = new BoolType();
 		} else if(basicType == "int") {
-			type = Type.INT;
+			type = new IntType();
 		} else if(basicType == "float") {
-			type = Type.FLOAT;
+			type = new FloatType();
 		} else if(basicType == "void") {
-			type = Type.VOID;
+			type = new VoidType();
 		} else {
-			type = Type.ERROR;
-			type.setError(location, str + " is not a type");
+			type = new ErrorType();
+			((ErrorType) type).setError(location, str + " is not a type");
 		}
 		type.dimensions = split.length - 1;
-		if(type == Type.VOID && type.dimensions > 0) {
-			type = Type.ERROR;
-			type.setError(location, "Array access is not allowed on VOID type");
+		if(type instanceof VoidType && type.dimensions > 0) {
+			type = new ErrorType();
+			((ErrorType) type).setError(location, "Array access is not allowed on VOID type");
 		}
 		return type;
 	}
@@ -50,20 +45,20 @@ public enum Type {
 	public static Type fromToken(Token token) {
 		switch(token.kind()) {
 			case VOID: 
-				return Type.VOID;
+				return new VoidType();
 			case BOOL: 
 			case TRUE: 
 			case FALSE: 
-				return Type.BOOL;
+				return new BoolType();
 			case INT_VAL: 
 			case INT: 
-				return Type.INT;
+				return new IntType();
 			case FLOAT_VAL: 
 			case FLOAT: 
-				return Type.FLOAT;
+				return new FloatType();
 			default: 
-				Type error = Type.ERROR;
-				error.setError(token, "Not a type");
+				Type error = new ErrorType();
+				((ErrorType) error).setError(token, "Not a type");
 				return error;
 		}
 	}

@@ -10,19 +10,24 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import types.ErrorType;
 import types.Type;
 import types.TypeChecker;
+import types.TypeList;
 import coco.Token.Kind;
 
 public class FunctionCall extends CheckableNode {
 	
-	Token function;
-	private List<Relation> parameters = new ArrayList<>();
-	Variables variables;
-	Set<String> types;
+	private Token function;
+	private List<Node> parameters = new ArrayList<>();
+	private Variables variables;
+	private Set<String> types;
+	
+	private Token call;
 
 	public FunctionCall(ReversibleScanner source, Variables variables) throws SyntaxException, NonexistantVariableException {
 		ErrorChecker.mustBe(Kind.CALL, "CALL", source);
+		call = source.last();
 		ErrorChecker.checkForMoreInput(source, "FUNCTION NAME");
 		function = source.next();
 		this.variables = variables;
@@ -32,7 +37,7 @@ public class FunctionCall extends CheckableNode {
 		Token argument = source.peek();
 		if(argument.kind() != Kind.CLOSE_PAREN) {
 			while(true) {
-				parameters.add(new Relation(source, variables));
+				parameters.add(new Relation(source, variables).genAST());
 				ErrorChecker.checkForMoreInput(source, "CLOSE_PAREN");
 				Token punctuation = source.next();
 				if(punctuation.kind() == Kind.COMMA) {
@@ -65,25 +70,29 @@ public class FunctionCall extends CheckableNode {
 	}
 	
 	public Type getType() {
-		String paramsType = parameters.toString();
 		for(String type: types) {
-			if(type.contains(paramsType)) {
+			TypeList possibleParameters = TypeList.fromString(type, call);
+			boolean correct = possibleParameters.size() == parameters.size();
+			for(int p=0; p<parameters.size(); ++p) {
+				correct &= parameters.get(p).getType().equals(possibleParameters.get(p));
+			}
+			if(correct) {
 				return Type.fromString(type.split("->")[1], function);
 			}
 		}
-		Type error = Type.ERROR;
-		error.setError(function, "No such function");
+		ErrorType error = new ErrorType();
+		error.setError(function, "Call with args " + TypeList.fromList(parameters) + " matches no function signature.");
 		return error;
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType) {
-		Type error = getType();
-		if(error == Type.ERROR) {
-			reporter.reportError(error);
+		for(Node parameter: parameters) {
+			parameter.checkType(reporter, returnType);
 		}
 		
-		for(Relation parameter: parameters) {
-			parameter.checkType(reporter, returnType);
+		Type error = getType();
+		if(ErrorType.is(error)) {
+			reporter.reportError((ErrorType) error);
 		}
 	}
 	
@@ -107,7 +116,7 @@ public class FunctionCall extends CheckableNode {
 		print.append("]\n");
 		addLevel(level+1, print);
 		print.append("ArgumentList\n");
-		for(Relation parameter: parameters) {
+		for(Node parameter: parameters) {
 			print.append(parameter.printPreOrder(level+2));
 		}
 		return print.toString();
