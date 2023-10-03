@@ -29,6 +29,11 @@ public class Literal extends CheckableNode {
 	
 	public void checkType(TypeChecker reporter, Type returnType) { }
 	
+	@Override
+	public String toString() {
+		return literal.lexeme();
+	}
+	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
 		addLevel(level, print);

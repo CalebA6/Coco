@@ -2,6 +2,7 @@ package ast;
 
 import java.util.List;
 
+import coco.Location;
 import coco.Token;
 import types.ArrayAccessException;
 import types.ErrorType;
@@ -11,30 +12,40 @@ import types.TypeChecker;
 
 public class ArrayIndex extends NamedNode {
 
-	private Relation index;
+	private Node index;
 	private NamedNode item;
 	private Token start;
+	private String indexSize;
 	
-	public ArrayIndex(NamedNode item, int index, List<Relation> indicies, List<Token> starts) {
-		this.index = indicies.get(index);
+	private Location location = index;
+	
+	public ArrayIndex(NamedNode item, int index, List<Relation> indicies, List<Token> starts, String[] indexSizes) {
+		this.index = indicies.get(index).genAST();
 		if(index >= indicies.size() - 1) {
+			start = starts.get(index);
+			indexSize = indexSizes[index];
 			this.item = item;
 		} else {
 			start = starts.get(index);
-			this.item = new ArrayIndex(item, index+1, indicies, starts);
+			indexSize = indexSizes[index];
+			this.item = new ArrayIndex(item, index+1, indicies, starts, indexSizes);
 		}
 	}
 	
 	public int lineNumber() {
-		return start.lineNumber();
+		return item.lineNumber();
 	}
 	
 	public int charPosition() {
-		return start.charPosition();
+		return item.charPosition();
 	}
 	
 	public Token getName() {
 		return item.getName();
+	}
+	
+	public void setLocation(Location location) {
+		this.location = location;
 	}
 	
 	public Type getType() {
@@ -45,6 +56,27 @@ public class ArrayIndex extends NamedNode {
 			type = new ErrorType();
 			((ErrorType) type).setError(start, "Array access on non-array type");
 		}
+		
+		if(!IntType.is(index.getType())) {
+			ErrorType error = new ErrorType();
+			error.setError(index, "Array index must be integer");
+			type = error;
+		} else {
+			if(index instanceof Literal) {
+				boolean outOfBounds = false;
+				int index = Integer.parseInt(this.index.toString());
+				if(index < 0) outOfBounds = true;
+				int indexSize = Integer.parseInt(this.indexSize);
+				if(index >= indexSize) outOfBounds = true;
+				
+				if(outOfBounds) {
+					ErrorType error = new ErrorType();
+					error.setError(location, "Array Index Out of Bounds : " + index + " for array " + item);
+					type = error;
+				}
+			}
+		}
+		
 		return type;
 	}
 	
@@ -52,15 +84,14 @@ public class ArrayIndex extends NamedNode {
 		if(ErrorType.is(getType())) {
 			reporter.reportError((ErrorType) getType());
 		}
-		
-		if(!IntType.is(index.getType())) {
-			ErrorType error = new ErrorType();
-			error.setError(index, "Array index must be integer");
-			reporter.reportError(error);
-		}
-		
-		item.checkType(reporter, returnType);
+
 		index.checkType(reporter, returnType);
+		item.checkType(reporter, returnType);
+	}
+	
+	@Override
+	public String toString() {
+		return item.toString();
 	}
 	
 	public String printPreOrder(int level) {

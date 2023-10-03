@@ -32,6 +32,11 @@ public class Variable extends NamedNode {
 	
 	public void checkType(TypeChecker reporter, Type returnType) { }
 	
+	@Override
+	public String toString() {
+		return name.lexeme();
+	}
+	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();
 		addLevel(level, print);

@@ -45,7 +45,11 @@ public class VariableDeclarations extends Node {
 		return new VoidType();
 	}
 	
-	public void checkType(TypeChecker reporter, Type returnType) { }
+	public void checkType(TypeChecker reporter, Type returnType) {
+		for(VariableDeclaration declaration: varDeclarations) {
+			declaration.checkType(reporter, returnType);
+		}
+	}
 	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();

@@ -11,6 +11,10 @@ public class Type {
 		return dimensions;
 	}
 	
+	public void setDimensions(int dimensions) {
+		this.dimensions = dimensions;
+	}
+	
 	public void decrementDimensions() throws ArrayAccessException {
 		if(dimensions == 0) {
 			throw new ArrayAccessException();

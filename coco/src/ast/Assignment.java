@@ -52,21 +52,23 @@ public class Assignment extends CheckableNode {
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType) {
+		if(assignee instanceof ArrayIndex) ((ArrayIndex) assignee).setLocation(operation);
+		assignee.checkType(reporter, returnType);
+		
 		if(operand != null) {
 			if(!assignee.getType().equals(operand.getType())) {
 				ErrorType error = new ErrorType();
-				error.setError(operation, "Cannot set " + operand.getType() + " to " + assignee.getType());
+				error.setError(assignee, "Cannot set " + operand.getType() + " to " + assignee.getType());
 				reporter.reportError(error);
 			}
 		} else {
 			if(!IntType.is(assignee.getType()) && !FloatType.is(assignee.getType())) {
 				ErrorType error = new ErrorType();
-				error.setError(operation, "Cannot increment " + assignee.getType());
+				error.setError(assignee, "Cannot increment " + assignee.getType());
 				reporter.reportError(error);
 			}
 		}
 		
-		assignee.checkType(reporter, returnType);
 		if(operand != null) operand.checkType(reporter, returnType);
 	}
 	

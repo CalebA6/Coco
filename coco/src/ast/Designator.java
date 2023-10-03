@@ -38,7 +38,12 @@ public class Designator extends Node {
 	public Node genAST() {
 		Variable var = new Variable(name, type);
 		if(indicies.size() > 0) {
-			return new ArrayIndex(var, 0, indicies, starts);
+			String[] indexCuts = type.split("\\[");
+			String[] indexSizes = new String[indexCuts.length - 1];
+			for(int i=1; i<indexCuts.length; ++i) {
+				indexSizes[i - 1] = indexCuts[i].substring(0, indexCuts[1].length() - 1);
+			}
+			return new ArrayIndex(var, 0, indicies, starts, indexSizes);
 		} else {
 			return var;
 		}
