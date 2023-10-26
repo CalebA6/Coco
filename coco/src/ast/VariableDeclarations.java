@@ -1,6 +1,7 @@
 package ast;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import coco.NoSuchStatementException;
@@ -49,6 +50,14 @@ public class VariableDeclarations extends Node {
 		for(VariableDeclaration declaration: varDeclarations) {
 			declaration.checkType(reporter, returnType, functionName);
 		}
+	}
+	
+	public Collection<String> getNames() {
+		List<String> names = new ArrayList<>();
+		for(VariableDeclaration var: varDeclarations) {
+			names.addAll(var.getNames());
+		}
+		return names;
 	}
 	
 	public String printPreOrder(int level) {

@@ -1,6 +1,7 @@
 package ast;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import coco.ErrorChecker;
@@ -107,6 +108,14 @@ public class VariableDeclaration extends Node {
 				reporter.reportError(error);
 			} */
 		}
+	}
+	
+	public Collection<String> getNames() {
+		List<String> names = new ArrayList<>();
+		for(Token name: identifiers) {
+			names.add(name.lexeme());
+		}
+		return names;
 	}
 	
 	public String printPreOrder(int level) {

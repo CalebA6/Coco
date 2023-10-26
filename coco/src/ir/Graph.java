@@ -1,12 +1,10 @@
 package ir;
 
-import java.util.List;
-
 public class Graph {
 	
 	private String name;
 	
-	public Graph(String function, List<Instruction> code) {
+	public Graph(String function, ValueCode code) {
 		name = function;
 	}
 	

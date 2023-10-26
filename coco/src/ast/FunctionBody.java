@@ -2,6 +2,7 @@ package ast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
@@ -12,6 +13,7 @@ import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
 import ir.Instruction;
+import ir.ValueCode;
 import types.Type;
 import types.TypeChecker;
 
@@ -50,9 +52,8 @@ public class FunctionBody extends Node {
 		statements.checkType(reporter, returnType, functionName);
 	}
 	
-	public List<Instruction> genCode() {
-		return new ArrayList<>();
-		// return statements.genIr();
+	public ValueCode genCode(ir.Variables variables) {
+		return statements.genCode(variables);
 	}
 	
 	public String printPreOrder(int level) {

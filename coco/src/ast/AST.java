@@ -1,7 +1,9 @@
 package ast;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
@@ -11,6 +13,7 @@ import coco.Scanner;
 import coco.SyntaxException;
 import coco.Variables;
 import ir.Graph;
+import ir.ValueCode;
 import types.Type;
 import types.TypeChecker;
 import types.VoidType;
@@ -116,8 +119,12 @@ public class AST extends Node {
 	}
 	
 	public List<Graph> genIr() {
-		List<Graph> graphs = functions == null ? new ArrayList<>() : functions.genIr();
-		if(action != null) graphs.add(new Graph("main", action.genCode()));
+		Set<String> globalVariables = new HashSet<>();
+		if(functions != null) globalVariables.addAll(functions.getNames());
+		if(varDeclarations != null) globalVariables.addAll(varDeclarations.getNames());
+		
+		List<Graph> graphs = functions == null ? new ArrayList<>() : functions.genIr(new ir.Variables(globalVariables));
+		if(action != null) graphs.add(new Graph("main", action.genCode(new ir.Variables(globalVariables))));
 		return graphs;
 	}
 	

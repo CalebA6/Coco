@@ -10,6 +10,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import ir.Instruction;
+import ir.ValueCode;
 import coco.Token.Kind;
 import types.Type;
 import types.TypeChecker;
@@ -59,12 +60,12 @@ public class Statements extends CheckableNode {
 		}
 	}
 	
-	public List<Instruction> genCode() {
+	public ValueCode genCode(ir.Variables variables) {
 		List<Instruction> instructions = new ArrayList<>();
 		/* for(CheckableNode statement: statements) {
-			instructions.addAll(statement.genInstruct());
+			instructions.addAll(statement.genCode(variables));
 		} */
-		return instructions;
+		return new ValueCode(instructions);
 	}
 	
 	public String printPreOrder(int level) {

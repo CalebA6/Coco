@@ -1,7 +1,9 @@
 package ast;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
@@ -58,12 +60,20 @@ public class FunctionDefinitions extends CheckableNode {
 		}
 	}
 	
-	public List<Graph> genIr() {
+	public List<Graph> genIr(ir.Variables variables) {
 		List<Graph> graphs = new ArrayList<>();
 		for(FunctionDeclaration function: functions) {
-			graphs.add(new Graph(function.getName().lexeme(), function.genCode()));
+			graphs.add(new Graph(function.getName().lexeme(), function.genCode(variables)));
 		}
 		return graphs;
+	}
+	
+	public Collection<String> getNames() {
+		List<String> names = new ArrayList<>();
+		for(FunctionDeclaration function: functions) {
+			names.add(function.getName().lexeme());
+		}
+		return names;
 	}
 	
 	public String printPreOrder(int level) {

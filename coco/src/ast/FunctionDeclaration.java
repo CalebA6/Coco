@@ -10,6 +10,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
 import ir.Instruction;
+import ir.ValueCode;
 import coco.Token.Kind;
 import types.Type;
 import types.TypeChecker;
@@ -66,8 +67,8 @@ public class FunctionDeclaration extends CheckableNode {
 		action.checkType(reporter, definedType, name.lexeme());
 	}
 	
-	public List<Instruction> genCode() {
-		return action.genCode();
+	public ValueCode genCode(ir.Variables variables) {
+		return action.genCode(variables);
 	}
 	
 	public String printPreOrder(int level) {
