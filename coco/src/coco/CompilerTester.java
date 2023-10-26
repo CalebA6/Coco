@@ -1,9 +1,12 @@
 package coco;
 
 import java.io.*;
+import java.util.*;
+
+
 import org.apache.commons.cli.*;
 
-
+//PA 7 generates 2 digraphs, one un-optimized, one optimized.
 public class CompilerTester {
 
     public static void main(String[] args) {
@@ -17,7 +20,13 @@ public class CompilerTester {
         options.addOption("gDir", "graphDir", false, "Graph dir, default will be current dir");
         options.addOption("ast", "ast", false, "Print AST.dot - requires graphs/");
 
+        options.addOption("cfg", "cfg", false, "Print CFG.dot - requires graphs/");
+        options.addOption("onefile", "onefile", false, "If true, 'ast.dot' and 'cfg.dot' are the names for files in graphs/");
+        options.addOption("allowVersions", "allowVersions", false, "Allowing versioning for files in graphs/");
 
+
+        options.addOption("o", "opt", true, "Order-sensitive optimization -allowed to have multiple");
+        options.addOption("max", "maxOpt", false, "Run all available optimizations till convergence");
 
         HelpFormatter formatter = new HelpFormatter();
         CommandLineParser cmdParser = new DefaultParser();
@@ -68,9 +77,37 @@ public class CompilerTester {
             numRegs = 24;
         }
 
-        
+
         Compiler c = new Compiler(s, numRegs);
         ast.AST ast = c.genAST();
+
+        String ast_text = ast.printPreOrder();
+        if (cmd.hasOption("astOut")) {
+            System.out.println(ast_text);
+        }
+
+        // create graph dir if needed
+        String graphDir = "";
+        if (cmd.hasOption("graphDir")) {
+            graphDir = cmd.getOptionValue("graphDir");
+            File dir = new File(graphDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+        }
+
+
+        if (cmd.hasOption("ast")) {
+            String filename = cmd.hasOption("onefile") ? "ast.dot" : sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_ast.dot";
+            try (PrintStream out = new PrintStream(graphDir+File.pathSeparator+filename)) {
+                out.print(ast.asDotGraph());
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.err.println("Error accessing the ast file: " + graphDir + File.pathSeparator + filename);
+                System.exit(-2);
+            }
+        }
+
         types.TypeChecker tc = new types.TypeChecker();
 
         if (!tc.check(ast)) {
@@ -78,6 +115,76 @@ public class CompilerTester {
             System.out.println(tc.errorReport());
             System.exit(-4);
         }
-       
+
+        String dotgraph_text = null;
+        try {
+            // dotgraph_text = c.genSSA(ast).asDotGraph();
+        	dotgraph_text = ast.asDotGraph();
+            System.out.println(dotgraph_text);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error caught - see stderr for stack trace " + e.getMessage());
+            System.exit(-5);
+        }
+
+        if (cmd.hasOption("cfg")) {
+            String filename = cmd.hasOption("onefile") ? "cfg.dot" : sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_cfg.dot";
+            try (PrintStream out = new PrintStream(graphDir+File.pathSeparator+filename)) {
+                out.print(dotgraph_text);
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.err.println("Error accessing the cfg file: "+ graphDir + File.pathSeparator + filename);
+                System.exit(-2);
+            }
+        }
+
+        // Comment these out for PA 7 - 8 - 9
+        String[] optArgs = cmd.getOptionValues("opt");
+        List<String> optArguments = (optArgs!=null && optArgs.length != 0) ? Arrays.asList(optArgs) : new ArrayList<String>();
+
+        //PA 7
+        try {
+            /* dotgraph_text = c.optimization(optArguments, cmd);
+            System.out.println(dotgraph_text); */
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error caught - see stderr for stack trace " + e.getMessage());
+            System.exit(-6);
+        }
+
+        // //PA 8
+        // c.regAlloc(numRegs);
+
+        // //PA 9
+        // int[] program = c.genCode();
+        // if (c.hasError()) {
+        //     System.err.println("Error compiling file");
+        //     System.err.println(c.errorReport());
+        //     System.exit(-4);
+        // }
+
+        // if (cmd.hasOption("asm")) {
+
+        //     String asmFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_asm.txt";
+        //     try (PrintStream out = new PrintStream(asmFile)) {
+        //         for (int i = 0; i < program.length; i++) {
+        //             out.print(i + ":\t" + DLX.instrString(program[i])); // \newline included in DLX.instrString()
+        //         }
+        //     } catch (IOException e) {
+        //         System.err.println("Error accessing the asm file: \"" + asmFile + "\"");
+        //         System.exit(-5);
+        //     }
+        // }
+
+        // DLX.load(program);
+        // try {
+        //     DLX.execute(in);
+        // } catch (IOException e) {
+        //     e.printStackTrace();
+        //     System.err.println("IOException inside DLX");
+        //     System.exit(-6);
+        // }
+
+
     }
 }

@@ -9,6 +9,7 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import ir.Instruction;
 import coco.Token.Kind;
 import types.Type;
 import types.TypeChecker;
@@ -56,6 +57,14 @@ public class Statements extends CheckableNode {
 		for(Node statement: statements) {
 			statement.checkType(reporter, returnType, functionName);
 		}
+	}
+	
+	public List<Instruction> genCode() {
+		List<Instruction> instructions = new ArrayList<>();
+		/* for(CheckableNode statement: statements) {
+			instructions.addAll(statement.genInstruct());
+		} */
+		return instructions;
 	}
 	
 	public String printPreOrder(int level) {

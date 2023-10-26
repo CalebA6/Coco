@@ -10,6 +10,7 @@ import coco.ReversibleScanner;
 import coco.Scanner;
 import coco.SyntaxException;
 import coco.Variables;
+import ir.Graph;
 import types.Type;
 import types.TypeChecker;
 import types.VoidType;
@@ -112,6 +113,21 @@ public class AST extends Node {
 		if(varDeclarations != null) varDeclarations.checkType(reporter, returnType, functionName);
 		if(functions != null) functions.checkType(reporter, returnType, functionName);
 		if(action != null) action.checkType(reporter, returnType, functionName);
+	}
+	
+	public List<Graph> genIr() {
+		List<Graph> graphs = functions == null ? new ArrayList<>() : functions.genIr();
+		if(action != null) graphs.add(new Graph("main", action.genCode()));
+		return graphs;
+	}
+	
+	public String asDotGraph() {
+		StringBuilder dot = new StringBuilder();
+		for(Graph graph: genIr()) {
+			dot.append(graph.dotGraph());
+			dot.append(" ");
+		}
+		return dot.toString();
 	}
 	
 	public boolean hasError() {

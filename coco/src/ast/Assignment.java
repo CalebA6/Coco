@@ -1,11 +1,14 @@
 package ast;
 
+import java.util.List;
+
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
 import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import ir.Instruction;
 import types.ErrorType;
 import types.FloatType;
 import types.IntType;
@@ -71,6 +74,36 @@ public class Assignment extends CheckableNode {
 		assignee.checkType(reporter, returnType, functionName);
 		if(operand != null) operand.checkType(reporter, returnType, functionName);
 	}
+	
+	/* public List<Instruction> genInstr() {
+		switch(operation.kind()) {
+		case ASSIGN: 
+		case ADD_ASSIGN: 
+		case SUB_ASSIGN: 
+		case MUL_ASSIGN: 
+		case DIV_ASSIGN: 
+		case MOD_ASSIGN: 
+		case POW_ASSIGN: 
+			String opVar = Instruction.getTemp();
+			List<Instruction> instructions = operand.genInstr(opVar);
+			if(operation.kind() == Kind.ASSIGN) {
+				instructions.add(new Instruction(InstrType.COPY, opVar, assignee));
+			} else {
+				Instruction op;
+				Instruction copy;
+				switch(operation.kind()) {
+				case ADD_ASSIGN: 
+					op = new Instruction(InstrType.ADD, opVar, assignee);
+				case SUB_ASSIGN: 
+					op = new Instruction(InstrType.SUB, opVar, assignee);
+					
+				}
+				copy = new Instruction(InstrType.COPY, op.result(), assignee);
+				instructions.add(op);
+				instructions.add(copy);
+			}
+		}
+	} */
 	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();

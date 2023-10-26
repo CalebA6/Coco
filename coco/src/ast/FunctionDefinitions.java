@@ -10,6 +10,7 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import ir.Graph;
 import coco.Token.Kind;
 import types.Type;
 import types.TypeChecker;
@@ -55,6 +56,14 @@ public class FunctionDefinitions extends CheckableNode {
 		for(FunctionDeclaration function: functions) {
 			function.checkType(reporter, returnType, functionName);
 		}
+	}
+	
+	public List<Graph> genIr() {
+		List<Graph> graphs = new ArrayList<>();
+		for(FunctionDeclaration function: functions) {
+			graphs.add(new Graph(function.getName().lexeme(), function.genCode()));
+		}
+		return graphs;
 	}
 	
 	public String printPreOrder(int level) {

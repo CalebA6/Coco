@@ -1,9 +1,13 @@
 package ast;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import coco.Location;
 import coco.Token;
+import ir.InstructType;
+import ir.Instruction;
 import types.ArrayAccessException;
 import types.ErrorType;
 import types.IntType;
@@ -93,6 +97,31 @@ public class ArrayIndex extends NamedNode {
 		index.checkType(reporter, returnType, functionName);
 		item.checkType(reporter, returnType, functionName);
 	}
+	
+	/* public List<Instruction> genCode(String result) {
+		return genCode(result, false);
+	}
+	
+	public List<Instruction> genCode(String result, boolean subArray) {
+		List<Instruction> instructions = new ArrayList<>();
+		if(item instanceof ArrayIndex) {
+			instructions.addAll(item.genCode(result, true));
+		}
+		if(subArray) {
+			if(item instanceof ArrayIndex) {
+				instructions.add(new Instruction(result, result, InstructType.MUL, Integer.parseInt(indexSize)));
+			} else {
+				instructions.add(new Instruction(result, 4));
+			}
+		} else {
+			if(item instanceof ArrayIndex) {
+				instructions.add(new Instruction(result, result, InstructType.MUL, Integer.parseInt(indexSize)));
+			} else {
+				instructions.add(new Instruction(result, 4));
+			}
+		}
+		return instructions;
+	} */
 	
 	@Override
 	public String toString() {

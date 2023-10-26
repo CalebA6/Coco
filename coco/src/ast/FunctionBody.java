@@ -1,5 +1,8 @@
 package ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
 import coco.RedefinitionException;
@@ -8,6 +11,7 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
+import ir.Instruction;
 import types.Type;
 import types.TypeChecker;
 
@@ -44,6 +48,11 @@ public class FunctionBody extends Node {
 	
 	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		statements.checkType(reporter, returnType, functionName);
+	}
+	
+	public List<Instruction> genCode() {
+		return new ArrayList<>();
+		// return statements.genIr();
 	}
 	
 	public String printPreOrder(int level) {

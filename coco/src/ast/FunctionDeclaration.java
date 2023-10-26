@@ -1,5 +1,7 @@
 package ast;
 
+import java.util.List;
+
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
 import coco.RedefinitionException;
@@ -7,6 +9,7 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import ir.Instruction;
 import coco.Token.Kind;
 import types.Type;
 import types.TypeChecker;
@@ -60,14 +63,11 @@ public class FunctionDeclaration extends CheckableNode {
 	
 	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
 		Type definedType = Type.fromToken(this.type);
-		/* Type returnedType = action.getType();
-		if(definedType != returnedType) {
-			Type error = Type.ERROR;
-			error.setError(this.type, definedType + " does not match returned type of " + returnedType);
-			reporter.reportError(error);
-		} */
-		
 		action.checkType(reporter, definedType, name.lexeme());
+	}
+	
+	public List<Instruction> genCode() {
+		return action.genCode();
 	}
 	
 	public String printPreOrder(int level) {
