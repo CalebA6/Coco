@@ -1,11 +1,17 @@
 package ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
 import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
+import ir.InstructType;
+import ir.Instruction;
+import ir.ValueCode;
 import coco.Variables;
 import types.BoolType;
 import types.ErrorType;
@@ -54,6 +60,26 @@ public class While extends CheckableNode {
 		}
 		
 		action.checkType(reporter, returnType, functionName);
+	}
+	
+	public ValueCode genCode(ir.Variables variables) {
+		List<Instruction> instructions = new ArrayList<>();
+		ValueCode decisionCode = decision.genCode(variables);
+		instructions.addAll(decisionCode.instructions);
+		String jumpDecision = variables.getTemp();
+		instructions.add(new Instruction(jumpDecision, InstructType.NOT, decisionCode.returnValue));
+		
+		ValueCode actionCode = action.genCode(variables);
+
+		Instruction afterAction = new Instruction();
+		Instruction jump = new Instruction(InstructType.JUMP, afterAction, jumpDecision);
+		
+		instructions.add(jump);
+		instructions.addAll(actionCode.instructions);
+		instructions.add(new Instruction(InstructType.JUMP, jump));
+		instructions.add(afterAction);
+
+		return new ValueCode(instructions, decisionCode.returnValue);
 	}
 	
 	public String printPreOrder(int level) {

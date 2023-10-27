@@ -62,9 +62,9 @@ public class Statements extends CheckableNode {
 	
 	public ValueCode genCode(ir.Variables variables) {
 		List<Instruction> instructions = new ArrayList<>();
-		/* for(CheckableNode statement: statements) {
-			instructions.addAll(statement.genCode(variables));
-		} */
+		for(CheckableNode statement: statements) {
+			instructions.addAll(statement.genCode(variables).instructions);
+		}
 		return new ValueCode(instructions);
 	}
 	

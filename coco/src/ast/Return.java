@@ -1,5 +1,8 @@
 package ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
 import coco.ReversibleScanner;
@@ -11,6 +14,9 @@ import types.Type;
 import types.TypeChecker;
 import types.VoidType;
 import coco.Variables;
+import ir.InstructType;
+import ir.Instruction;
+import ir.ValueCode;
 
 public class Return extends CheckableNode {
 	
@@ -61,6 +67,14 @@ public class Return extends CheckableNode {
 				reporter.reportError(error);
 			}
 		}
+	}
+	
+	public ValueCode genCode(ir.Variables variables) {
+		List<Instruction> instructions = new ArrayList<>();
+		ValueCode valueCode = value.genCode(variables);
+		instructions.addAll(valueCode.instructions);
+		instructions.add(new Instruction(InstructType.RETURN, valueCode.returnValue));
+		return new ValueCode(instructions, valueCode.returnValue);
 	}
 	
 	public String printPreOrder(int level) {

@@ -14,6 +14,7 @@ import types.TypeChecker;
 
 public class Not extends CheckableNode {
 	
+	// TODO need to move over to AST!
 	Relation relation;
 	Token not;
 
@@ -46,6 +47,11 @@ public class Not extends CheckableNode {
 			reporter.reportError(error);
 		}
 	}
+	
+	/* public ValueCode genCode(ir.Variables variables) {
+		List<Instruction> instructions = new ArrayList<>();
+		ValueCode 
+	} */
 	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();

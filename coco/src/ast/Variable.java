@@ -1,6 +1,9 @@
 package ast;
 
+import java.util.ArrayList;
+
 import coco.Token;
+import ir.ValueCode;
 import types.Type;
 import types.TypeChecker;
 
@@ -33,6 +36,10 @@ public class Variable extends NamedNode {
 	public void checkFunctionCalls(AST parent) { }
 	
 	public void checkType(TypeChecker reporter, Type returnType, String functionName) { }
+	
+	public ValueCode genCode(ir.Variables variables) {
+		return new ValueCode(new ArrayList<>(), name.lexeme());
+	}
 	
 	@Override
 	public String toString() {

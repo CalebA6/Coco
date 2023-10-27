@@ -132,7 +132,6 @@ public class AST extends Node {
 		StringBuilder dot = new StringBuilder();
 		for(Graph graph: genIr()) {
 			dot.append(graph.dotGraph());
-			dot.append(" ");
 		}
 		return dot.toString();
 	}

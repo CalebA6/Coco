@@ -1,5 +1,8 @@
 package ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
 import coco.ReversibleScanner;
@@ -11,6 +14,9 @@ import types.ErrorType;
 import types.Type;
 import types.TypeChecker;
 import coco.Token.Kind;
+import ir.InstructType;
+import ir.Instruction;
+import ir.ValueCode;
 
 public class Repeat extends CheckableNode {
 
@@ -54,6 +60,25 @@ public class Repeat extends CheckableNode {
 			error.setError(start, "RepeatStat requires bool condition not " + decision.getType() + ".");
 			reporter.reportError(error);
 		}
+	}
+	
+	public ValueCode genCode(ir.Variables variables) {
+		List<Instruction> instructions = new ArrayList<>();
+		ValueCode decisionCode = decision.genCode(variables);
+		
+		ValueCode actionCode = action.genCode(variables);
+		
+		if(actionCode.instructions.size() > 0) {
+			Instruction jump = new Instruction(InstructType.JUMP, actionCode.instructions.get(0), decisionCode.returnValue);
+			
+			instructions.addAll(actionCode.instructions);
+			instructions.addAll(decisionCode.instructions);
+			instructions.add(jump);
+		} else {
+			instructions.addAll(decisionCode.instructions);
+		}
+
+		return new ValueCode(instructions, decisionCode.returnValue);
 	}
 	
 	public String printPreOrder(int level) {

@@ -2,12 +2,12 @@ package ast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import coco.Location;
 import coco.Token;
 import ir.InstructType;
 import ir.Instruction;
+import ir.ValueCode;
 import types.ArrayAccessException;
 import types.ErrorType;
 import types.IntType;
@@ -98,30 +98,29 @@ public class ArrayIndex extends NamedNode {
 		item.checkType(reporter, returnType, functionName);
 	}
 	
-	/* public List<Instruction> genCode(String result) {
-		return genCode(result, false);
+	public ValueCode genCode(ir.Variables variables) {
+		List<Instruction> instructions = new ArrayList<>();
+		String begin = variables.getTemp();
+		instructions.add(new Instruction(begin, "0"));
+		ValueCode code = genCode(variables, begin);
+		instructions.addAll(code.instructions);
+		return new ValueCode(instructions, getName().lexeme() + "[" + code.returnValue + "]");
 	}
 	
-	public List<Instruction> genCode(String result, boolean subArray) {
+	public ValueCode genCode(ir.Variables variables, String input) {
 		List<Instruction> instructions = new ArrayList<>();
+		ValueCode indexCode = index.genCode(variables);
+		String indexCalc = variables.getTemp();
+		instructions.add(new Instruction(indexCalc, input, InstructType.ADD, indexCode.returnValue));
+		instructions.add(new Instruction(indexCalc, indexCalc, InstructType.MUL, indexSize));
 		if(item instanceof ArrayIndex) {
-			instructions.addAll(item.genCode(result, true));
-		}
-		if(subArray) {
-			if(item instanceof ArrayIndex) {
-				instructions.add(new Instruction(result, result, InstructType.MUL, Integer.parseInt(indexSize)));
-			} else {
-				instructions.add(new Instruction(result, 4));
-			}
+			ValueCode fullIndex = ((ArrayIndex)item).genCode(variables, indexCalc);
+			instructions.addAll(fullIndex.instructions);
+			return new ValueCode(instructions, fullIndex.returnValue);
 		} else {
-			if(item instanceof ArrayIndex) {
-				instructions.add(new Instruction(result, result, InstructType.MUL, Integer.parseInt(indexSize)));
-			} else {
-				instructions.add(new Instruction(result, 4));
-			}
+			return new ValueCode(instructions, indexCalc);
 		}
-		return instructions;
-	} */
+	}
 	
 	@Override
 	public String toString() {

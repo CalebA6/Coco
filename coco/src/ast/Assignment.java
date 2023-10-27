@@ -1,5 +1,6 @@
 package ast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import coco.ErrorChecker;
@@ -8,7 +9,9 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import ir.InstructType;
 import ir.Instruction;
+import ir.ValueCode;
 import types.ErrorType;
 import types.FloatType;
 import types.IntType;
@@ -75,35 +78,52 @@ public class Assignment extends CheckableNode {
 		if(operand != null) operand.checkType(reporter, returnType, functionName);
 	}
 	
-	/* public List<Instruction> genInstr() {
+	public ValueCode genCode(ir.Variables variables) {
+		List<Instruction> instructions = new ArrayList<>();
+		ValueCode operandCode = operand.genCode(variables);
+		ValueCode assigneeCode = assignee.genCode(variables);
+		instructions.addAll(operandCode.instructions);
+		instructions.addAll(assigneeCode.instructions);
 		switch(operation.kind()) {
-		case ASSIGN: 
-		case ADD_ASSIGN: 
-		case SUB_ASSIGN: 
-		case MUL_ASSIGN: 
-		case DIV_ASSIGN: 
-		case MOD_ASSIGN: 
-		case POW_ASSIGN: 
-			String opVar = Instruction.getTemp();
-			List<Instruction> instructions = operand.genInstr(opVar);
-			if(operation.kind() == Kind.ASSIGN) {
-				instructions.add(new Instruction(InstrType.COPY, opVar, assignee));
-			} else {
-				Instruction op;
-				Instruction copy;
-				switch(operation.kind()) {
-				case ADD_ASSIGN: 
-					op = new Instruction(InstrType.ADD, opVar, assignee);
-				case SUB_ASSIGN: 
-					op = new Instruction(InstrType.SUB, opVar, assignee);
-					
-				}
-				copy = new Instruction(InstrType.COPY, op.result(), assignee);
-				instructions.add(op);
-				instructions.add(copy);
-			}
+			case ASSIGN: 
+			case UNI_INC: 
+			case UNI_DEC: 
+				instructions.add(new Instruction(assigneeCode.returnValue, operandCode.returnValue));
+				break;
+			case ADD_ASSIGN: 
+				instructions.add(new Instruction(assigneeCode.returnValue, assigneeCode.returnValue, InstructType.ADD, operandCode.returnValue));
+				break;
+			case SUB_ASSIGN: 
+				instructions.add(new Instruction(assigneeCode.returnValue, assigneeCode.returnValue, InstructType.SUB, operandCode.returnValue));
+				break;
+			case MUL_ASSIGN: 
+				instructions.add(new Instruction(assigneeCode.returnValue, assigneeCode.returnValue, InstructType.MUL, operandCode.returnValue));
+				break;
+			case DIV_ASSIGN: 
+				instructions.add(new Instruction(assigneeCode.returnValue, assigneeCode.returnValue, InstructType.DIV, operandCode.returnValue));
+				break;
+			case MOD_ASSIGN: 
+				/*String factor = variables.getTemp();
+				instructions.add(new Instruction(factor, assigneeCode.returnValue, InstructType.DIV, operandCode.returnValue));
+				String goesAway = variables.getTemp();
+				instructions.add(new Instruction(goesAway, operandCode.returnValue, InstructType.MUL, factor));
+				instructions.add(new Instruction(assigneeCode.returnValue, assigneeCode.returnValue, InstructType.SUB, goesAway));*/
+				instructions.add(new Instruction(assigneeCode.returnValue, assigneeCode.returnValue, InstructType.MOD, operandCode.returnValue));
+				break;
+			case POW_ASSIGN: 
+				/* String times = variables.getTemp();
+				String original = variables.getTemp();
+				instructions.add(new Instruction(times, operandCode.returnValue));
+				instructions.add(new Instruction(original, assigneeCode.returnValue));
+				instructions.add(new Instruction(assigneeCode.returnValue, 1));
+				instructions.add(new Instruction(assigneeCode.returnValue, assigneeCode.returnValue, InstructType.MUL, original));*/
+				instructions.add(new Instruction(assigneeCode.returnValue, assigneeCode.returnValue, InstructType.POW, operandCode.returnValue));
+				break;
+			default: 
+				throw new RuntimeException("Unexpected Assignment Operation Encountered");
 		}
-	} */
+		return new ValueCode(instructions, assigneeCode.returnValue);
+	}
 	
 	public String printPreOrder(int level) {
 		StringBuilder print = new StringBuilder();

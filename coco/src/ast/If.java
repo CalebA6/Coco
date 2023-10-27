@@ -1,5 +1,8 @@
 package ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
 import coco.ReversibleScanner;
@@ -7,6 +10,9 @@ import coco.SyntaxException;
 import coco.Token;
 import coco.Token.Kind;
 import coco.Variables;
+import ir.InstructType;
+import ir.Instruction;
+import ir.ValueCode;
 import types.BoolType;
 import types.ErrorType;
 import types.Type;
@@ -78,6 +84,31 @@ public class If extends CheckableNode {
 		decision.checkType(reporter, returnType, functionName);
 		action.checkType(reporter, returnType, functionName);
 		if(inaction != null) inaction.checkType(reporter, returnType, functionName);
+	}
+	
+	public ValueCode genCode(ir.Variables variables) {
+		List<Instruction> instructions = new ArrayList<>();
+		ValueCode decisionCode = decision.genCode(variables);
+		instructions.addAll(decisionCode.instructions);
+		String jumpDecision = variables.getTemp();
+		instructions.add(new Instruction(jumpDecision, InstructType.NOT, decisionCode.returnValue));
+		
+		ValueCode actionCode = action.genCode(variables);
+		ValueCode inactionCode = inaction == null ? null : inaction.genCode(variables);
+		
+		Instruction afterAction = new Instruction();
+		instructions.add(new Instruction(InstructType.JUMP, afterAction, jumpDecision));
+		instructions.addAll(actionCode.instructions);
+		instructions.add(afterAction);
+
+		if(inactionCode != null && inactionCode.instructions.size() > 0) {
+			Instruction afterIf = new Instruction();
+			instructions.add(new Instruction(InstructType.JUMP, afterIf));
+			instructions.addAll(inactionCode.instructions);
+			instructions.add(afterIf);
+		}
+
+		return new ValueCode(instructions, decisionCode.returnValue);
 	}
 	
 	public String printPreOrder(int level) {

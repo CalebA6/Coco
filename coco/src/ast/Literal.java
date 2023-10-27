@@ -1,7 +1,10 @@
 package ast;
 
+import java.util.ArrayList;
+
 import coco.Token;
 import coco.Token.Kind;
+import ir.ValueCode;
 import types.Type;
 import types.TypeChecker;
 
@@ -28,6 +31,10 @@ public class Literal extends CheckableNode {
 	}
 	
 	public void checkType(TypeChecker reporter, Type returnType, String functionName) { }
+	
+	public ValueCode genCode(ir.Variables variables) {
+		return new ValueCode(new ArrayList<>(), literal.lexeme());
+	}
 	
 	@Override
 	public String toString() {

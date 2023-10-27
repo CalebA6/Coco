@@ -10,6 +10,8 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import ir.Instruction;
+import ir.ValueCode;
 import types.ErrorType;
 import types.Type;
 import types.TypeChecker;
@@ -103,6 +105,32 @@ public class FunctionCall extends CheckableNode {
 		for(Node parameter: parameters) {
 			parameter.checkType(reporter, returnType, functionName);
 		}
+	}
+	
+	public ValueCode genCode(ir.Variables variables) {
+		List<Instruction> instructions = new ArrayList<>();
+		String result = variables.getTemp();
+		List<String> params = new ArrayList<>();
+		for(Node param: parameters) {
+			ValueCode paramCode = param.genCode(variables);
+			instructions.addAll(paramCode.instructions);
+			params.add(paramCode.returnValue);
+		}
+		
+		String call = "call " + function.lexeme() + "(";
+		boolean first = true;
+		for(String param: params) {
+			if(first) {
+				first = false;
+			} else {
+				call += ", ";
+			}
+			call += param;
+		}
+		call += ")";
+		
+		instructions.add(new Instruction(result, call));
+		return new ValueCode(instructions, result);
 	}
 	
 	public String printPreOrder(int level) {

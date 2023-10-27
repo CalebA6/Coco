@@ -68,6 +68,7 @@ public class FunctionDeclaration extends CheckableNode {
 	}
 	
 	public ValueCode genCode(ir.Variables variables) {
+		variables.add(parameters.getNames());
 		return action.genCode(variables);
 	}
 	
