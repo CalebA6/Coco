@@ -14,6 +14,7 @@ public class Instruction {
 	private int index;
 	
 	private Set<Instruction> targetingJumps = new HashSet<>();
+	private Block block;
 	
 	public Instruction() {
 		
@@ -81,6 +82,10 @@ public class Instruction {
 		return location != null || op == InstructType.RETURN;
 	}
 	
+	public boolean isConditionalJump() {
+		return isJump() && value1 != null;
+	}
+	
 	public boolean isReturn() {
 		return op == InstructType.RETURN;
 	}
@@ -103,6 +108,18 @@ public class Instruction {
 	
 	public boolean targeted(Instruction instr) {
 		return targetingJumps.contains(instr);
+	}
+	
+	public Set<Instruction> getTargetingJumps() {
+		return targetingJumps;
+	}
+	
+	public void setBlock(Block block) {
+		this.block = block;
+	}
+	
+	public Block getBlock() {
+		return block;
 	}
 	
 	@Override
