@@ -99,13 +99,15 @@ public class If extends CheckableNode {
 		Instruction afterAction = new Instruction();
 		instructions.add(new Instruction(InstructType.JUMP, afterAction, jumpDecision));
 		instructions.addAll(actionCode.instructions);
-		instructions.add(afterAction);
 
 		if(inactionCode != null && inactionCode.instructions.size() > 0) {
 			Instruction afterIf = new Instruction();
 			instructions.add(new Instruction(InstructType.JUMP, afterIf));
+			instructions.add(afterAction);
 			instructions.addAll(inactionCode.instructions);
 			instructions.add(afterIf);
+		} else {
+			instructions.add(afterAction);
 		}
 
 		return new ValueCode(instructions, decisionCode.returnValue);

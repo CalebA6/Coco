@@ -77,19 +77,8 @@ public class FunctionCall extends CheckableNode {
 	
 	public Type getType() {
 		if(types != null) {
-			for(String type: types) {
-				String[] typeParts = type.split("->");
-				String paramTypes = typeParts[0];
-				String returnType = typeParts[1];
-				TypeList possibleParameters = TypeList.fromString(paramTypes, call);
-				boolean correct = possibleParameters.size() == parameters.size();
-				for(int p=0; p<parameters.size()&&correct; ++p) {
-					correct &= parameters.get(p).getType().equals(possibleParameters.get(p));
-				}
-				if(correct) {
-					return Type.fromString(returnType, this);
-				}
-			}
+			String returnType = getReturnType();
+			if(returnType != null) return Type.fromString(returnType, this);
 		}
 		ErrorType error = new ErrorType();
 		error.setError(this, "Call with args " + TypeList.fromList(parameters) + " matches no function signature.");
@@ -129,6 +118,10 @@ public class FunctionCall extends CheckableNode {
 		}
 		call += ")";
 		
+		if(getReturnType().equals("void")) {
+			instructions.add(new Instruction(call));
+			return new ValueCode(instructions, call);
+		}
 		instructions.add(new Instruction(result, call));
 		return new ValueCode(instructions, result);
 	}
@@ -157,6 +150,23 @@ public class FunctionCall extends CheckableNode {
 			print.append(parameter.printPreOrder(level+2));
 		}
 		return print.toString();
+	}
+	
+	private String getReturnType() {
+		for(String type: types) {
+			String[] typeParts = type.split("->");
+			String paramTypes = typeParts[0];
+			String returnType = typeParts[1];
+			TypeList possibleParameters = TypeList.fromString(paramTypes, call);
+			boolean correct = possibleParameters.size() == parameters.size();
+			for(int p=0; p<parameters.size()&&correct; ++p) {
+				correct &= parameters.get(p).getType().equals(possibleParameters.get(p));
+			}
+			if(correct) {
+				return returnType;
+			}
+		}
+		return null;
 	}
 	
 }

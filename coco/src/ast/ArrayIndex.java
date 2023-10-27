@@ -104,7 +104,9 @@ public class ArrayIndex extends NamedNode {
 		instructions.add(new Instruction(begin, "0"));
 		ValueCode code = genCode(variables, begin);
 		instructions.addAll(code.instructions);
-		return new ValueCode(instructions, getName().lexeme() + "[" + code.returnValue + "]");
+		String location = variables.getTemp();
+		instructions.add(new Instruction(location, code.returnValue, InstructType.MUL, "4"));
+		return new ValueCode(instructions, getName().lexeme() + "[" + location + "]");
 	}
 	
 	public ValueCode genCode(ir.Variables variables, String input) {

@@ -76,7 +76,11 @@ public class While extends CheckableNode {
 		
 		instructions.add(jump);
 		instructions.addAll(actionCode.instructions);
-		instructions.add(new Instruction(InstructType.JUMP, jump));
+		if(decisionCode.instructions.size() > 0) {
+			instructions.add(new Instruction(InstructType.JUMP, decisionCode.instructions.get(0)));
+		} else {
+			instructions.add(new Instruction(InstructType.JUMP, jump));
+		}
 		instructions.add(afterAction);
 
 		return new ValueCode(instructions, decisionCode.returnValue);

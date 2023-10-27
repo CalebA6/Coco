@@ -19,6 +19,11 @@ public class Instruction {
 		
 	}
 	
+	// Void Function
+	public Instruction(String call) {
+		assignee = call;
+	}
+	
 	// Copy Assignment
 	public Instruction(String assignee, String value) {
 		this.assignee = assignee;
@@ -106,19 +111,26 @@ public class Instruction {
 		instr.append(index);
 		instr.append(": ");
 		if((op != InstructType.JUMP) && (op != InstructType.RETURN)) {
-			instr.append(assignee);
-			instr.append(" = ");
-			if(op == InstructType.NOT) {
-				instr.append(op);
-				instr.append(value1);
-			} else if(op != null) {
-				instr.append(value1);
-				instr.append(" ");
-				instr.append(op);
-				instr.append(" ");
-				instr.append(value2);
+			if(assignee == null) {
+				instr.append("EXIT");
 			} else {
-				instr.append(value1);
+				instr.append(assignee);
+			}
+			if(value1 != null) {
+				instr.append(" = ");
+				if(op == InstructType.NOT) {
+					instr.append(op);
+					instr.append(" ");
+					instr.append(value1);
+				} else if(op != null) {
+					instr.append(value1);
+					instr.append(" ");
+					instr.append(op);
+					instr.append(" ");
+					instr.append(value2);
+				} else {
+					instr.append(value1);
+				}
 			}
 		} else {
 			instr.append(op);
