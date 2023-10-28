@@ -60,10 +60,11 @@ public class FunctionDefinitions extends CheckableNode {
 		}
 	}
 	
-	public List<Graph> genIr(ir.Variables variables) {
+	public List<Graph> genIr(Set<String> globalVariables) {
 		List<Graph> graphs = new ArrayList<>();
 		for(FunctionDeclaration function: functions) {
-			graphs.add(new Graph(function.getName().lexeme(), function.genCode(variables)));
+			ir.Variables variables = new ir.Variables(globalVariables);
+			graphs.add(new Graph(function.getName().lexeme(), function.genCode(variables), globalVariables));
 		}
 		return graphs;
 	}

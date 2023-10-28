@@ -12,30 +12,29 @@ public class Graph {
 	private String name;
 	private Block entry;
 	private List<Block> blocks = new ArrayList<>();
-	private Instruction exit = null;
 	
-	public Graph(String function, ValueCode code) {
+	public Graph(String function, ValueCode code, Set<String> globalVariables) {
 		name = function;
 		
 		List<Instruction> instructions = code.instructions;
 		assignIndicies(instructions);
 		moveJumpsOffNoOps(instructions);
 		removeNoOps(instructions);
-		exit = addExit(instructions);
+		addExit(instructions);
 		assignIndicies(instructions);
 		addJumpTargets(instructions);
-		Block block = entry = new Block();
+		Block block = entry = new Block(globalVariables);
 		blocks.add(block);
 		for(Instruction instr: instructions) {
 			if(instr.targeted()) {
-				Block newBlock = new Block();
+				Block newBlock = new Block(globalVariables);
 				block.addSuccessor(newBlock);
 				block = newBlock;
 				blocks.add(block);
 			}
 			block.addInstruction(instr);
 			if(instr.isJump()) {
-				Block newBlock = new Block();
+				Block newBlock = new Block(globalVariables);
 				if(instr.isConditionalJump()) block.addSuccessor(newBlock);
 				block = newBlock;
 				blocks.add(block);
@@ -87,6 +86,25 @@ public class Graph {
 		}
 		dot.append("}\n");
 		return dot.toString();
+	}
+	
+	public void eliminateDeadCode() {
+		boolean change = true;
+		while(change) {
+			change = false;
+			
+			boolean lvChange = true;
+			while(lvChange) {
+				lvChange = false;
+				for(Block block: blocks) {
+					lvChange = block.updateLiveVariables() || lvChange;
+				}
+			}
+			
+			for(Block block: blocks) {
+				change = block.eliminateDeadCode() || change;
+			}
+		}
 	}
 	
 	private void assignIndicies(List<Instruction> instructions) {

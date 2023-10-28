@@ -78,6 +78,10 @@ public class Instruction {
 		return assignee == null && value1 == null && op == null && value2 == null && location == null;
 	}
 	
+	public boolean isAssignment() {
+		return value1 != null && (op == null || (op != InstructType.JUMP && op != InstructType.RETURN));
+	}
+	
 	public boolean isJump() {
 		return location != null || op == InstructType.RETURN;
 	}
@@ -88,6 +92,14 @@ public class Instruction {
 	
 	public boolean isReturn() {
 		return op == InstructType.RETURN;
+	}
+	
+	public boolean isCall() {
+		return value1 != null && value1.startsWith("call ");
+	}
+	
+	public boolean isVoidCall() {
+		return assignee != null && assignee.startsWith("call ");
 	}
 	
 	public Instruction getJump() {

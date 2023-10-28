@@ -13,7 +13,6 @@ import coco.Scanner;
 import coco.SyntaxException;
 import coco.Variables;
 import ir.Graph;
-import ir.ValueCode;
 import types.Type;
 import types.TypeChecker;
 import types.VoidType;
@@ -27,6 +26,8 @@ public class AST extends Node {
 	private VariableDeclarations varDeclarations = null;
 	private FunctionDefinitions functions = null;
 	private Statements action = null;
+	
+	private List<Graph> ir = null;
 
 	public AST(Scanner scanner) {
 		ReversibleScanner source = new ReversibleScanner(scanner);
@@ -119,12 +120,14 @@ public class AST extends Node {
 	}
 	
 	public List<Graph> genIr() {
+		if(ir != null) return ir;
 		Set<String> globalVariables = new HashSet<>();
 		if(functions != null) globalVariables.addAll(functions.getNames());
 		if(varDeclarations != null) globalVariables.addAll(varDeclarations.getNames());
 		
-		List<Graph> graphs = functions == null ? new ArrayList<>() : functions.genIr(new ir.Variables(globalVariables));
-		if(action != null) graphs.add(new Graph("main", action.genCode(new ir.Variables(globalVariables))));
+		List<Graph> graphs = functions == null ? new ArrayList<>() : functions.genIr(globalVariables);
+		if(action != null) graphs.add(new Graph("main", action.genCode(new ir.Variables(globalVariables)), globalVariables));
+		ir = graphs;
 		return graphs;
 	}
 	
