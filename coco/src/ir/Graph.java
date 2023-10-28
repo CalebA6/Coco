@@ -88,7 +88,8 @@ public class Graph {
 		return dot.toString();
 	}
 	
-	public void eliminateDeadCode() {
+	public boolean eliminateDeadCode() {
+		boolean someChange = false;
 		boolean change = true;
 		while(change) {
 			change = false;
@@ -104,13 +105,18 @@ public class Graph {
 			for(Block block: blocks) {
 				change = block.eliminateDeadCode() || change;
 			}
+			
+			if(change) someChange = true;
 		}
+		return someChange;
 	}
 	
-	public void foldConstants() {
+	public boolean foldConstants() {
+		boolean change = false;
 		for(Block block: blocks) {
-			block.foldConstants();
+			change = block.foldConstants() || change;
 		}
+		return change;
 	}
 	
 	private void assignIndicies(List<Instruction> instructions) {

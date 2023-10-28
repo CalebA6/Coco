@@ -26,8 +26,12 @@ public class Compiler {
 		List<Graph> functions = ast.genIr();
 		
 		for(Graph function: functions) {
-			if(optStrings.contains("dce")) function.eliminateDeadCode();
-			if(optStrings.contains("cf")) function.foldConstants();
+			boolean change = true;
+			while(change) {
+				change = false;
+				if(optStrings.contains("dce")) change = function.eliminateDeadCode() || change;
+				if(optStrings.contains("cf")) change = function.foldConstants() || change;
+			}
 		}
 		
 		StringBuilder dot = new StringBuilder();
