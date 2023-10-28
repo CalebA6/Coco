@@ -149,6 +149,97 @@ public class Block implements Iterable<Instruction> {
 		return change;
 	}
 	
+	public boolean foldConstants() {
+		boolean change = false;
+		for(Instruction instr: instructions) {
+			try {
+				int left = Integer.parseInt(instr.value1);
+				int right = Integer.parseInt(instr.value2);
+				int result = 0;
+				switch(instr.op) {
+				case ADD: 
+					result = left + right;
+					break;
+				case SUB: 
+					result = left - right;
+					break;
+				case MUL: 
+					result = left * right;
+					break;
+				case DIV: 
+					result = left / right;
+					break;
+				case MOD: 
+					result = left % right;
+					break;
+				case POW: 
+					result = (int)Math.pow(left, right);
+					break;
+				default: 
+					boolean boolResult;
+					switch(instr.op) {
+					case LESS_EQUAL: 
+						boolResult = left <= right;
+						break;
+					case GREATER_EQUAL: 
+						boolResult = left >= right;
+						break;
+					case LESS: 
+						boolResult = left < right;
+						break;
+					case GREATER: 
+						boolResult = left > right;
+						break;
+					default: 
+						throw new RuntimeException("Invalid operation");
+					}
+					instr.value1 = Boolean.toString(boolResult);
+					instr.op = null;
+					instr.value2 = null;
+					change = true;
+				}
+				instr.value1 = Integer.toString(result);
+				instr.op = null;
+				instr.value2 = null;
+				change = true;
+			} catch (Exception e) {
+				try {
+					boolean left = toBoolean(instr.value1);
+					boolean right = toBoolean(instr.value2);
+					boolean result;
+					switch(instr.op) {
+					case EQUAL: 
+						result = left == right;
+						break;
+					case NOT_EQUAL: 
+						result = left != right;
+						break;
+					case OR: 
+						result = left || right;
+						break;
+					case AND: 
+						result = left && right;
+						break;
+					default: 
+						throw new RuntimeException("Invalid operation");
+					}
+					instr.value1 = Boolean.toString(result);
+					instr.op = null;
+					instr.value2 = null;
+					change = true;
+				} catch(Exception e1) {
+					if(instr.op != null && instr.op == InstructType.NOT && (instr.value1.equals("true") || instr.value1.equals("false"))) {
+						boolean value = toBoolean(instr.value1);
+						instr.value1 = Boolean.toString(!value);
+						instr.op = null;
+						change = true;
+					}
+				}
+			}
+		}
+		return change;
+	}
+	
 	private List<String> functionParameters(String functionCall) {
 		String afterClosing = functionCall.split("\\(")[1];
 		String parametersString = afterClosing.substring(0, afterClosing.length()-1);
@@ -159,6 +250,12 @@ public class Block implements Iterable<Instruction> {
 		}
 		return params;
 		
+	}
+	
+	private boolean toBoolean(String value) {
+		if(value.equals("true")) return true;
+		if(value.equals("false")) return false;
+		throw new RuntimeException("Not a boolean");
 	}
 	
 	protected Instruction getFirst() {

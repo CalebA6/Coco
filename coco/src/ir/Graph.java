@@ -107,6 +107,12 @@ public class Graph {
 		}
 	}
 	
+	public void foldConstants() {
+		for(Block block: blocks) {
+			block.foldConstants();
+		}
+	}
+	
 	private void assignIndicies(List<Instruction> instructions) {
 		int index = 0;
 		for(Instruction instr: instructions) {

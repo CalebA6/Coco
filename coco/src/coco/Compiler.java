@@ -27,6 +27,7 @@ public class Compiler {
 		
 		for(Graph function: functions) {
 			if(optStrings.contains("dce")) function.eliminateDeadCode();
+			if(optStrings.contains("cf")) function.foldConstants();
 		}
 		
 		StringBuilder dot = new StringBuilder();
