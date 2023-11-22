@@ -102,6 +102,59 @@ public class Instruction {
 		return assignee != null && assignee.startsWith("call ");
 	}
 	
+	public boolean isCopy() {
+		return assignee != null && value1 != null && op == null;
+	}
+	
+	public String[] getParameters() {
+		if(!isCall() && !isVoidCall()) {
+			throw new RuntimeException("Can only get the parameters of a function call");
+		}
+		if(isCall()) {
+			int start = value1.indexOf('(');
+			String parameters = value1.substring(start + 1, value1.length() - 1);
+			return parameters.split(",");
+		} else {
+			int start = assignee.indexOf('(');
+			String parameters = assignee.substring(start + 1, assignee.length() - 1);
+			return parameters.split(",");
+		}
+	}
+	
+	public void replaceParameter(int index, String newParameter) {
+		if(!isCall() && !isVoidCall()) {
+			throw new RuntimeException("Can only replace the parameters of a function call");
+		}
+		String base;
+		String parametersString;
+		if(isCall()) {
+			int start = value1.indexOf('(');
+			base = value1.substring(0, start + 1);
+			parametersString = value1.substring(start + 1, value1.length() - 1);
+		} else {
+			int start = assignee.indexOf('(');
+			base = assignee.substring(0, start + 1);
+			parametersString = assignee.substring(start + 1, assignee.length() - 1);
+		}
+		String[] parameters = parametersString.split(",");
+		for(int i=0; i<index; ++i) {
+			base += parameters[i] + ",";
+		}
+		base += newParameter;
+		for(int i=index+1; i<parameters.length; ++i) {
+			base += parameters[i];
+			if(i < parameters.length - 1) {
+				base += ",";
+			}
+		}
+		base += ")";
+		if(isCall()) {
+			value1 = base;
+		} else {
+			assignee = base;
+		}
+	}
+	
 	public Instruction getJump() {
 		return location;
 	}

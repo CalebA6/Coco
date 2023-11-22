@@ -1,9 +1,11 @@
 package ir;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class Block implements Iterable<Instruction> {
@@ -14,8 +16,10 @@ public class Block implements Iterable<Instruction> {
 	Set<Block> successors = new HashSet<>();
 	String name = "B" + ++index;
 	
-	Set<String> in = new HashSet<>();
-	Set<String> out = new HashSet<>();
+	Set<String> varIn = new HashSet<>();
+	Set<String> varOut = new HashSet<>();
+	Map<String, String> expIn = new HashMap<>();
+	Map<String, String> expOut = new HashMap<>();
 	
 	Set<String> globalVariables;
 	
@@ -64,14 +68,19 @@ public class Block implements Iterable<Instruction> {
 		return name;
 	}
 	
+	protected void clearPropagationSets() {
+		varIn = new HashSet<>();
+		varOut = new HashSet<>();
+	}
+	
 	protected boolean updateLiveVariables() {
-		out = new HashSet<>();
+		varOut = new HashSet<>();
 		for(Block after: successors) {
-			out.addAll(after.in);
+			varOut.addAll(after.varIn);
 		}
 		
 		Set<String> liveVariables = new HashSet<>();
-		liveVariables.addAll(out);
+		liveVariables.addAll(varOut);
 		for(int i = numInstructions()-1; i>=0; --i) {
 			Instruction instr = instructions.get(i);
 			if(instr.isCall() || instr.isVoidCall()) {
@@ -90,24 +99,67 @@ public class Block implements Iterable<Instruction> {
 			}
 		}
 		
-		if(liveVariables.size() != in.size()) {
-			in = liveVariables;
+		if(liveVariables.size() != varIn.size()) {
+			varIn = liveVariables;
 			return true;
 		}
 		for(String var: liveVariables) {
-			if(!in.contains(var)) {
-				in = liveVariables;
+			if(!varIn.contains(var)) {
+				varIn = liveVariables;
 				return true;
 			}
 		}
-		in = liveVariables;
+		varIn = liveVariables;
+		return false;
+	}
+	
+	protected boolean updateAvailableExpressions() {
+		expIn = new HashMap<>();
+		for(Block before: predeccessors) {
+			for(String assignment: before.expOut.keySet()) {
+				String value = before.expOut.get(assignment);
+				if(expIn.containsKey(assignment) && !value.equals(expIn.get(assignment))) {
+					expIn.put(assignment, "#any");
+				} else {
+					expIn.put(assignment, value);
+				}
+			}
+		}
+		
+		Map<String, String> availExp = new HashMap<>();
+		copyMap(expIn, availExp);
+		for(Instruction instr: instructions) {
+			if(instr.isAssignment() && !instr.isCall()) {
+				String[] exp = instr.toString().split(" = ");
+				String var = exp[0].split(" ")[1];
+				String value = exp[1];
+				availExp.put(var, value);
+				/* if(availExp.containsKey(var) && availExp.get(var).equals(value)) {
+					availExp.put(var, "#any");
+				} else {
+					availExp.put(var, value);
+				} */
+			}
+		}
+		
+		if(availExp.size() != expOut.size()) {
+			expOut = availExp;
+			return true;
+		}
+		for(String exp: availExp.keySet()) {
+			if(!expOut.containsKey(exp) || !expOut.get(exp).equals(availExp.get(exp))) {
+				expOut = availExp;
+				return true;
+			}
+		}
+		expOut = availExp;
 		return false;
 	}
 	
 	protected boolean eliminateDeadCode() {
 		boolean change = false;
 		Set<String> liveVariables = new HashSet<>();
-		liveVariables.addAll(out);
+		liveVariables.addAll(varOut);
 		for(int i = numInstructions()-1; i>=0; --i) {
 			Instruction instr = instructions.get(i);
 			if(instr.isAssignment() && !liveVariables.contains(instr.assignee)) {
@@ -240,6 +292,50 @@ public class Block implements Iterable<Instruction> {
 		return change;
 	}
 	
+	public boolean propagateConstants() {
+		Map<String, String> availConsts = new HashMap<>();
+		copyMap(expIn, availConsts);
+		Set<String> nonConstantExpr = new HashSet<>();
+		for(String var: availConsts.keySet()) {
+			if(availConsts.get(var).equals("#any")) {
+				nonConstantExpr.add(var);
+			} else if(!isConst(availConsts.get(var))) {
+				nonConstantExpr.add(var);
+			}
+		}
+		for(String expr: nonConstantExpr) {
+			availConsts.remove(expr);
+		}
+		
+		boolean change = false;
+		
+		for(Instruction instr: instructions) {
+			if(instr.isCall() || instr.isVoidCall()) {
+				String[] parameters = instr.getParameters();
+				for(int param=0; param<parameters.length; ++param) {
+					if(availConsts.containsKey(parameters[param])) {
+						instr.replaceParameter(param, availConsts.get(parameters[param]));
+						change = true;
+					}
+				}
+			} else {
+				if(instr.value1 != null && availConsts.containsKey(instr.value1)) {
+					instr.value1 = availConsts.get(instr.value1);
+					change = true;
+				}
+				if(instr.value2 != null && availConsts.containsKey(instr.value2)) {
+					instr.value2 = availConsts.get(instr.value2);
+					change = true;
+				}
+			}
+			if(instr.isCopy() && !instr.isCall()) {
+				availConsts.put(instr.assignee, instr.value1);
+			}
+		}
+		
+		return change;
+	}
+	
 	private List<String> functionParameters(String functionCall) {
 		String afterClosing = functionCall.split("\\(")[1];
 		String parametersString = afterClosing.substring(0, afterClosing.length()-1);
@@ -256,6 +352,16 @@ public class Block implements Iterable<Instruction> {
 		if(value.equals("true")) return true;
 		if(value.equals("false")) return false;
 		throw new RuntimeException("Not a boolean");
+	}
+	
+	private void copyMap(Map original, Map copy) {
+		for(Object key: original.keySet()) {
+			copy.put(key, original.get(key));
+		}
+	}
+	
+	private boolean isConst(String expression) {
+		return !(expression.contains(" ") || expression.contains("("));
 	}
 	
 	protected Instruction getFirst() {

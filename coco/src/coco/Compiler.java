@@ -22,6 +22,10 @@ public class Compiler {
 		return ast;
 	}
 	
+	public AST genSSA(AST ast) {
+		return ast;
+	}
+	
 	public String optimization(List<String> optStrings, CommandLine optsCmd) {
 		List<Graph> functions = ast.genIr();
 		
@@ -29,8 +33,9 @@ public class Compiler {
 			boolean change = true;
 			while(change) {
 				change = false;
-				if(optStrings.contains("dce")) change = function.eliminateDeadCode() || change;
-				if(optStrings.contains("cf")) change = function.foldConstants() || change;
+				if(optStrings.contains("dce") || optStrings.contains("max")) change = function.eliminateDeadCode() || change;
+				if(optStrings.contains("cf") || optStrings.contains("max")) change = function.foldConstants() || change;
+				if(optStrings.contains("cp") || optStrings.contains("max")) change = function.propagateConstants() || change;
 			}
 		}
 		

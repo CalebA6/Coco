@@ -118,8 +118,7 @@ public class CompilerTester {
 
         String dotgraph_text = null;
         try {
-            // dotgraph_text = c.genSSA(ast).asDotGraph();
-        	dotgraph_text = ast.asDotGraph();
+            dotgraph_text = c.genSSA(ast).asDotGraph();
             System.out.println(dotgraph_text);
         } catch (Exception e) {
             e.printStackTrace();
