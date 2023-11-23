@@ -115,13 +115,34 @@ public class Block implements Iterable<Instruction> {
 	
 	protected boolean updateAvailableExpressions() {
 		expIn = new HashMap<>();
+		Map<String, Boolean> exprSeen = new HashMap<>();
+		boolean first = true;
 		for(Block before: predeccessors) {
 			for(String assignment: before.expOut.keySet()) {
 				String value = before.expOut.get(assignment);
 				if(expIn.containsKey(assignment) && !value.equals(expIn.get(assignment))) {
 					expIn.put(assignment, "#any");
-				} else {
-					expIn.put(assignment, value);
+				} else if(expIn.containsKey(assignment)) {
+					if(first) {
+						expIn.put(assignment, value);
+					} else {
+						exprSeen.put(assignment, true);
+					}
+				}
+			}
+			
+			if(first) {
+				for(String expr: expIn.keySet()) {
+					exprSeen.put(expr, false);
+				}
+				first = false;
+			} else {
+				for(String expr: expIn.keySet()) {
+					if(exprSeen.get(expr)) {
+						exprSeen.put(expr, false);
+					} else {
+						expIn.remove(expr);
+					}
 				}
 			}
 		}
@@ -133,12 +154,9 @@ public class Block implements Iterable<Instruction> {
 				String[] exp = instr.toString().split(" = ");
 				String var = exp[0].split(" ")[1];
 				String value = exp[1];
-				availExp.put(var, value);
-				/* if(availExp.containsKey(var) && availExp.get(var).equals(value)) {
-					availExp.put(var, "#any");
-				} else {
+				if(!exprContainsValue(value, var)) {
 					availExp.put(var, value);
-				} */
+				}
 			}
 		}
 		
@@ -336,6 +354,84 @@ public class Block implements Iterable<Instruction> {
 		return change;
 	}
 	
+	public boolean eliminateCommonSubexpressions() {
+		Map<String, String> availExprVars = new HashMap<>();
+		copyMap(expIn, availExprVars);
+		Set<String> nonConstantExpr = new HashSet<>();
+		for(String var: availExprVars.keySet()) {
+			if(availExprVars.get(var).equals("#any")) {
+				nonConstantExpr.add(var);
+			} else if(isConst(availExprVars.get(var))) {
+				nonConstantExpr.add(var);
+			}
+		}
+		for(String expr: nonConstantExpr) {
+			availExprVars.remove(expr);
+		}
+		
+		boolean change = false;
+		
+		for(Instruction instr: instructions) {
+			if(instr.isExpr()) {
+				// Gets Variables
+				String[] exp = instr.toString().split(" = ");
+				String var = exp[0].split(" ")[1];
+				String value = exp[1];
+				
+				// Checks if expression can be eliminated
+				if(availExprVars.values().contains(value)) {
+					for(String potentialVar: availExprVars.keySet()) {
+						if(availExprVars.get(potentialVar).equals(value)) {
+							instr.makeCopy(potentialVar);
+							change = true;
+							break;
+						}
+					}
+					// Remove expressions with changed operands
+					Set<String> exprsToRemove = new HashSet<>();
+					for(String expr: availExprVars.keySet()) {
+						String[] ops = availExprVars.get(expr).split(" ");
+						for(String op: ops) {
+							if(op.equals(instr.assignee)) {
+								exprsToRemove.add(expr);
+							}
+						}
+					}
+					for(String expr: exprsToRemove) {
+						availExprVars.remove(expr);
+					}
+				} else {
+					// Adds Expression to Map (assuming the variable isn't defined in terms of itself)
+					String[] ops = value.split(" ");
+					boolean safeToAdd = true;
+					for(String op: ops) {
+						if(op.equals(instr.assignee)) {
+							safeToAdd = false;
+							break;
+						}
+					}
+					if(safeToAdd) availExprVars.put(var, value);
+				}
+			} else if(instr.isCopy()) {
+				// Remove expressions changed by copy
+				Set<String> exprsToRemove = new HashSet<>();
+				for(String expr: availExprVars.keySet()) {
+					String[] ops = availExprVars.get(expr).split(" ");
+					for(String op: ops) {
+						if(op.equals(instr.assignee)) {
+							exprsToRemove.add(expr);
+						}
+					}
+				}
+				for(String expr: exprsToRemove) {
+					availExprVars.remove(expr);
+				}
+			}
+		}
+		
+		return change;
+	}
+	
 	private List<String> functionParameters(String functionCall) {
 		String afterClosing = functionCall.split("\\(")[1];
 		String parametersString = afterClosing.substring(0, afterClosing.length()-1);
@@ -358,6 +454,16 @@ public class Block implements Iterable<Instruction> {
 		for(Object key: original.keySet()) {
 			copy.put(key, original.get(key));
 		}
+	}
+	
+	private boolean exprContainsValue(String expr, String value) {
+		String[] ops = expr.split(" ");
+		for(String op: ops) {
+			if(op.equals(value)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	private boolean isConst(String expression) {

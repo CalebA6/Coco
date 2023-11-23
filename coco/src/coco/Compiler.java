@@ -36,6 +36,7 @@ public class Compiler {
 				if(optStrings.contains("dce") || optStrings.contains("max")) change = function.eliminateDeadCode() || change;
 				if(optStrings.contains("cf") || optStrings.contains("max")) change = function.foldConstants() || change;
 				if(optStrings.contains("cp") || optStrings.contains("max")) change = function.propagateConstants() || change;
+				if(optStrings.contains("cse") || optStrings.contains("max")) change = function.eliminateCommonSubexpressions() || change;
 			}
 		}
 		

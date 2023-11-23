@@ -106,6 +106,10 @@ public class Instruction {
 		return assignee != null && value1 != null && op == null;
 	}
 	
+	public boolean isExpr() {
+		return value2 != null || op == InstructType.NOT;
+	}
+	
 	public String[] getParameters() {
 		if(!isCall() && !isVoidCall()) {
 			throw new RuntimeException("Can only get the parameters of a function call");
@@ -177,6 +181,12 @@ public class Instruction {
 	
 	public Set<Instruction> getTargetingJumps() {
 		return targetingJumps;
+	}
+	
+	public void makeCopy(String variable) {
+		value1 = variable;
+		op = null;
+		value2 = null;
 	}
 	
 	public void setBlock(Block block) {

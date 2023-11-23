@@ -128,6 +128,29 @@ public class Graph {
 		while(change) {
 			change = false;
 
+			boolean paChange = true;
+			while(paChange) {
+				paChange = false;
+				for(Block block: blocks) {
+					paChange = block.updateAvailableExpressions() || paChange;
+				}
+			}
+			
+			for(Block block: blocks) {
+				change = block.propagateConstants() || change;
+			}
+			
+			if(change) someChange = true;
+		}
+		return someChange;
+	}
+	
+	public boolean eliminateCommonSubexpressions() {
+		boolean someChange = false;
+		boolean change = true;
+		while(change) {
+			change = false;
+
 			for(Block block: blocks) {
 				block.clearPropagationSets();
 			}
@@ -140,7 +163,7 @@ public class Graph {
 			}
 			
 			for(Block block: blocks) {
-				change = block.propagateConstants() || change;
+				change = block.eliminateCommonSubexpressions() || change;
 			}
 			
 			if(change) someChange = true;
