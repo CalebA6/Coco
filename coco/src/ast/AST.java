@@ -1,7 +1,9 @@
 package ast;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
@@ -10,6 +12,10 @@ import coco.ReversibleScanner;
 import coco.Scanner;
 import coco.SyntaxException;
 import coco.Variables;
+import ir.Graph;
+import types.Type;
+import types.TypeChecker;
+import types.VoidType;
 import coco.Token.Kind;
 
 public class AST extends Node {
@@ -20,6 +26,8 @@ public class AST extends Node {
 	private VariableDeclarations varDeclarations = null;
 	private FunctionDefinitions functions = null;
 	private Statements action = null;
+	
+	private List<Graph> ir = null;
 
 	public AST(Scanner scanner) {
 		ReversibleScanner source = new ReversibleScanner(scanner);
@@ -91,6 +99,44 @@ public class AST extends Node {
 			error.add(e);
 			return;
 		}
+	}
+	
+	public int lineNumber() {
+		return 0;
+	}
+	
+	public int charPosition() {
+		return 0;
+	}
+	
+	public Type getType() {
+		return new VoidType();
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
+		if(varDeclarations != null) varDeclarations.checkType(reporter, returnType, functionName);
+		if(functions != null) functions.checkType(reporter, returnType, functionName);
+		if(action != null) action.checkType(reporter, returnType, functionName);
+	}
+	
+	public List<Graph> genIr() {
+		if(ir != null) return ir;
+		Set<String> globalVariables = new HashSet<>();
+		if(functions != null) globalVariables.addAll(functions.getNames());
+		if(varDeclarations != null) globalVariables.addAll(varDeclarations.getNames());
+		
+		List<Graph> graphs = functions == null ? new ArrayList<>() : functions.genIr(globalVariables);
+		if(action != null) graphs.add(new Graph("main", action.genCode(new ir.Variables(globalVariables)), globalVariables));
+		ir = graphs;
+		return graphs;
+	}
+	
+	public String asDotGraph() {
+		StringBuilder dot = new StringBuilder();
+		for(Graph graph: genIr()) {
+			dot.append(graph.dotGraph());
+		}
+		return dot.toString();
 	}
 	
 	public boolean hasError() {

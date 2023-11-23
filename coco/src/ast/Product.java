@@ -8,6 +8,8 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import types.Type;
+import types.TypeChecker;
 import coco.Token.Kind;
 
 public class Product extends CheckableNode {
@@ -29,6 +31,14 @@ public class Product extends CheckableNode {
 		}
 	}
 	
+	public int lineNumber() {
+		return operands.get(0).lineNumber();
+	}
+	
+	public int charPosition() {
+		return operands.get(0).charPosition();
+	}
+	
 	public void checkFunctionCalls(AST parent) {
 		for(Power operand: operands) {
 			operand.checkFunctionCalls(parent);
@@ -37,14 +47,22 @@ public class Product extends CheckableNode {
 	
 	public Node genAST() {
 		if(operations.size() > 0) {
-			Operation current = new Operation(operands.get(0), operands.get(1), operationString(operations.get(0)));
+			Operation current = new Operation(operands.get(0).genAST(), operands.get(1).genAST(), operationString(operations.get(0)), operations.get(0));
 			for(int op=1; op<operations.size(); ++op) {
-				current = new Operation(current, operands.get(op+1), operationString(operations.get(op)));
+				current = new Operation(current, operands.get(op+1).genAST(), operationString(operations.get(op)), operations.get(op));
 			}
 			return current;
 		} else {
 			return operands.get(0).genAST();
 		}
+	}
+	
+	public Type getType() {
+		return operands.get(0).getType();
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
+		throw new RuntimeException("Product is not in AST and should not be typechecked.");
 	}
 	
 	public String printPreOrder(int level) {

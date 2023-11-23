@@ -1,6 +1,7 @@
 package ast;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import coco.NoSuchStatementException;
@@ -8,6 +9,9 @@ import coco.RedefinitionException;
 import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Variables;
+import types.Type;
+import types.TypeChecker;
+import types.VoidType;
 
 public class VariableDeclarations extends Node {
 
@@ -23,11 +27,37 @@ public class VariableDeclarations extends Node {
 		}
 	}
 	
+	public int lineNumber() {
+		return varDeclarations.get(0).lineNumber();
+	}
+	
+	public int charPosition() {
+		return varDeclarations.get(0).charPosition();
+	}
+	
 	public VariableDeclarations getAST() {
 		if(varDeclarations.isEmpty()) {
 			return null;
 		}
 		return this;
+	}
+	
+	public Type getType() {
+		return new VoidType();
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
+		for(VariableDeclaration declaration: varDeclarations) {
+			declaration.checkType(reporter, returnType, functionName);
+		}
+	}
+	
+	public Collection<String> getNames() {
+		List<String> names = new ArrayList<>();
+		for(VariableDeclaration var: varDeclarations) {
+			names.addAll(var.getNames());
+		}
+		return names;
 	}
 	
 	public String printPreOrder(int level) {

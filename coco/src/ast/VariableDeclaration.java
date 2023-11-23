@@ -1,6 +1,7 @@
 package ast;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import coco.ErrorChecker;
@@ -10,6 +11,9 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import types.ErrorType;
+import types.Type;
+import types.TypeChecker;
 import coco.Token.Kind;
 
 public class VariableDeclaration extends Node {
@@ -18,6 +22,8 @@ public class VariableDeclaration extends Node {
 	private List<Token> arrayDimensions = new ArrayList<>();
 	private List<Token> identifiers = new ArrayList<>();
 	private Variables variables;
+	
+	private Token end;
 
 	public VariableDeclaration(ReversibleScanner source, Variables variables) throws SyntaxException, NoSuchStatementException, RedefinitionException {
 		this.variables = variables;
@@ -47,6 +53,7 @@ public class VariableDeclaration extends Node {
 					identifier = ErrorChecker.mustBe(Kind.IDENT, "IDENT", source);
 					addIdentifier(identifier);
 				} else if(token.kind() == Kind.SEMICOLON) {
+					end = token;
 					break;
 				} else {
 					throw new SyntaxException("Expected COMMA but got " + token.kind() + ".", token);
@@ -56,6 +63,59 @@ public class VariableDeclaration extends Node {
 			source.push(type);
 			throw new NoSuchStatementException();
 		}
+	}
+	
+	public int lineNumber() {
+		return end.lineNumber();
+	}
+	
+	public int charPosition() {
+		return end.charPosition();
+	}
+	
+	public Type getType() {
+		Type type = Type.fromToken(this.type);
+		type.setDimensions(arrayDimensions.size());
+		return type;
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
+		for(Token dimension: arrayDimensions) {
+			if((dimension.kind() != Kind.INT_VAL)) {
+				ErrorType error = new ErrorType();
+				error.setError(dimension, "Cannot set array size to " + Type.fromToken(dimension));
+			}
+			String number = dimension.lexeme();
+			boolean negative = false;
+			if(number.charAt(0) == '-') negative = true;
+			boolean zero = true;
+			for(int c=0; c<number.length(); ++c) {
+				if(number.charAt(c) != '0' && number.charAt(c) != '.') {
+					zero = false;
+					break;
+				}
+			}
+			/* if(negative || zero) {
+				ErrorType error = new ErrorType();
+				StringBuilder vars = new StringBuilder();
+				for(Token name: identifiers) {
+					if(vars.length() > 0) {
+						vars.append(",");
+					}
+					vars.append(name.lexeme());
+				}
+				error.setError(this, "Array " + vars.toString() + " has invalid size " + dimension.lexeme());
+				reporter.reportError(error);
+			} */
+		}
+	}
+	
+	public Collection<String> getNames() {
+		List<String> names = new ArrayList<>();
+		for(Token name: identifiers) {
+			names.add(name.lexeme());
+		}
+		return names;
 	}
 	
 	public String printPreOrder(int level) {

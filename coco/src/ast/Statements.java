@@ -9,7 +9,12 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import ir.Instruction;
+import ir.ValueCode;
 import coco.Token.Kind;
+import types.Type;
+import types.TypeChecker;
+import types.VoidType;
 
 public class Statements extends CheckableNode {
 	
@@ -26,10 +31,41 @@ public class Statements extends CheckableNode {
 		} while((next.kind() != Kind.CLOSE_BRACE) && (next.kind() != Kind.FI) && (next.kind() != Kind.ELSE) && (next.kind() != Kind.OD) && (next.kind() != Kind.UNTIL));
 	}
 	
+	public int lineNumber() {
+		return statements.get(0).lineNumber();
+	}
+	
+	public int charPosition() {
+		return statements.get(0).charPosition();
+	}
+	
 	public void checkFunctionCalls(AST parent) {
 		for(CheckableNode statement: statements) {
 			statement.checkFunctionCalls(parent);
 		}
+	}
+	
+	public Type getType() {
+		for(Node statement: statements) {
+			if(statement instanceof Return) {
+				return statement.getType();
+			}
+		}
+		return new VoidType();
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
+		for(Node statement: statements) {
+			statement.checkType(reporter, returnType, functionName);
+		}
+	}
+	
+	public ValueCode genCode(ir.Variables variables) {
+		List<Instruction> instructions = new ArrayList<>();
+		for(CheckableNode statement: statements) {
+			instructions.addAll(statement.genCode(variables).instructions);
+		}
+		return new ValueCode(instructions);
 	}
 	
 	public String printPreOrder(int level) {

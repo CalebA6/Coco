@@ -1,6 +1,5 @@
 package ast;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import coco.ErrorChecker;
@@ -10,7 +9,11 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
+import ir.Instruction;
+import ir.ValueCode;
 import coco.Token.Kind;
+import types.Type;
+import types.TypeChecker;
 
 public class FunctionDeclaration extends CheckableNode {
 	
@@ -35,6 +38,14 @@ public class FunctionDeclaration extends CheckableNode {
 		variables.exitLevel();
 	}
 	
+	public int lineNumber() {
+		return name.lineNumber();
+	}
+	
+	public int charPosition() {
+		return name.charPosition();
+	}
+	
 	public Token getName() {
 		return name;
 	}
@@ -45,6 +56,20 @@ public class FunctionDeclaration extends CheckableNode {
 	
 	public void checkFunctionCalls(AST parent) {
 		action.checkFunctionCalls(parent);
+	}
+	
+	public Type getType() {
+		return Type.fromToken(type);
+	}
+	
+	public void checkType(TypeChecker reporter, Type returnType, String functionName) {
+		Type definedType = Type.fromToken(this.type);
+		action.checkType(reporter, definedType, name.lexeme());
+	}
+	
+	public ValueCode genCode(ir.Variables variables) {
+		variables.add(parameters.getNames());
+		return action.genCode(variables);
 	}
 	
 	public String printPreOrder(int level) {

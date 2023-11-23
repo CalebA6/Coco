@@ -1,6 +1,7 @@
 package ast;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import coco.ErrorChecker;
@@ -32,6 +33,14 @@ public class Parameters /*extends Traversible*/ {
 		ErrorChecker.mustBe(Kind.CLOSE_PAREN, "CLOSE_PAREN", source);
 	}
 	
+	public Collection<String> getNames() {
+		List<String> names = new ArrayList<>();
+		for(Parameter parameter: parameters) {
+			names.add(parameter.getName().lexeme());
+		}
+		return names;
+	}
+	
 	@Override
 	public String toString() {
 		String str = "(";
@@ -44,15 +53,5 @@ public class Parameters /*extends Traversible*/ {
 		str += ")";
 		return str;
 	}
-	
-	/*public String printPreOrder(int level) {
-		StringBuilder print = new StringBuilder();
-		addLevel(level, print);
-		print.append("ArgumentList\n");
-		for(Parameter parameter: parameters) {
-			print.append(parameter.printPreOrder(level+1));
-		}
-		return print.toString();
-	}*/
 	
 }

@@ -2,6 +2,6 @@ package ast;
 
 import coco.Token;
 
-abstract class NamedNode extends Node {
+abstract class NamedNode extends CheckableNode {
 	public abstract Token getName();
 }

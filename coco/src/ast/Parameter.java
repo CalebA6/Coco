@@ -19,6 +19,10 @@ public class Parameter {
 		variables.add(name, type.toString());
 	}
 	
+	public Token getName() {
+		return name;
+	}
+	
 	public String getTypeString() {
 		return type.toString();
 	}
