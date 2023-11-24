@@ -1,6 +1,7 @@
 package ast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -155,6 +156,7 @@ public class FunctionCall extends CheckableNode {
 	private String getReturnType() {
 		for(String type: types) {
 			String[] typeParts = type.split("->");
+			if(typeParts.length < 2) continue;
 			String paramTypes = typeParts[0];
 			String returnType = typeParts[1];
 			TypeList possibleParameters = TypeList.fromString(paramTypes, call);

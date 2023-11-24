@@ -5,10 +5,10 @@ import java.util.Set;
 
 public class Instruction {
 	
-	String assignee = null;
-	String value1 = null;
-	InstructType op = null;
-	String value2 = null;
+	public String assignee = null;
+	public String value1 = null;
+	public InstructType op = null;
+	public String value2 = null;
 	Instruction location = null;
 	
 	private int index;
@@ -108,6 +108,33 @@ public class Instruction {
 	
 	public boolean isExpr() {
 		return value2 != null || op == InstructType.NOT;
+	}
+	
+	public boolean isNot() {
+		return op == InstructType.NOT;
+	}
+	
+	public boolean isOp() {
+		return value2 != null;
+	}
+	
+	public boolean isExit() {
+		return (op != InstructType.JUMP) && (op != InstructType.RETURN) && (assignee == null);
+	}
+	
+	public boolean isComparison() {
+		if(value2 != null) {
+			switch(op) {
+			case EQUAL: 
+			case NOT_EQUAL: 
+			case LESS_EQUAL: 
+			case GREATER_EQUAL: 
+			case LESS: 
+			case GREATER: 
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public String[] getParameters() {

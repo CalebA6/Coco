@@ -44,6 +44,18 @@ public class Graph {
 		updateSuccessors(blocks);
 	}
 	
+	public String getName() {
+		return name;
+	}
+	
+	public int length() {
+		int len = 0;
+		for(Block block: blocks) {
+			len += block.numInstructions();
+		}
+		return len;
+	}
+	
 	public String dotGraph() {
 		StringBuilder dot = new StringBuilder();
 		List<String> edges = new ArrayList<>();

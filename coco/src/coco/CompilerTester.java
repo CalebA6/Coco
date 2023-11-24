@@ -3,10 +3,9 @@ package coco;
 import java.io.*;
 import java.util.*;
 
-
+// You need to put jar files in lib/ in your classpath
 import org.apache.commons.cli.*;
 
-//PA 7 generates 2 digraphs, one un-optimized, one optimized.
 public class CompilerTester {
 
     public static void main(String[] args) {
@@ -81,8 +80,8 @@ public class CompilerTester {
         Compiler c = new Compiler(s, numRegs);
         ast.AST ast = c.genAST();
 
-        String ast_text = ast.printPreOrder();
         if (cmd.hasOption("astOut")) {
+            String ast_text = ast.printPreOrder();
             System.out.println(ast_text);
         }
 
@@ -100,7 +99,7 @@ public class CompilerTester {
         if (cmd.hasOption("ast")) {
             String filename = cmd.hasOption("onefile") ? "ast.dot" : sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_ast.dot";
             try (PrintStream out = new PrintStream(graphDir+File.pathSeparator+filename)) {
-                out.print(ast.asDotGraph());
+                out.print(ast);
             } catch (IOException e) {
                 e.printStackTrace();
                 System.err.println("Error accessing the ast file: " + graphDir + File.pathSeparator + filename);
@@ -119,7 +118,7 @@ public class CompilerTester {
         String dotgraph_text = null;
         try {
             dotgraph_text = c.genSSA(ast).asDotGraph();
-            System.out.println(dotgraph_text);
+//            System.out.println(dotgraph_text);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Error caught - see stderr for stack trace " + e.getMessage());
@@ -143,8 +142,8 @@ public class CompilerTester {
 
         //PA 7
         try {
-            dotgraph_text = c.optimization(optArguments, cmd);
-            System.out.println(dotgraph_text);
+            String optimized_dotgraph_text = c.optimization(optArguments, cmd);
+           System.out.println(optimized_dotgraph_text);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Error caught - see stderr for stack trace " + e.getMessage());
@@ -154,35 +153,35 @@ public class CompilerTester {
         //PA 8
         c.regAlloc(numRegs);
 
-        // //PA 9
-        // int[] program = c.genCode();
-        // if (c.hasError()) {
-        //     System.err.println("Error compiling file");
-        //     System.err.println(c.errorReport());
-        //     System.exit(-4);
-        // }
+        //PA 9
+        int[] program = c.genCode();
+        if (c.hasError()) {
+            System.out.println("Error compiling file");
+            System.out.println(c.errorReport());
+            System.exit(-4);
+        }
 
-        // if (cmd.hasOption("asm")) {
+        if (cmd.hasOption("asm")) {
 
-        //     String asmFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_asm.txt";
-        //     try (PrintStream out = new PrintStream(asmFile)) {
-        //         for (int i = 0; i < program.length; i++) {
-        //             out.print(i + ":\t" + DLX.instrString(program[i])); // \newline included in DLX.instrString()
-        //         }
-        //     } catch (IOException e) {
-        //         System.err.println("Error accessing the asm file: \"" + asmFile + "\"");
-        //         System.exit(-5);
-        //     }
-        // }
+            String asmFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_asm.txt";
+            try (PrintStream out = new PrintStream(asmFile)) {
+                for (int i = 0; i < program.length; i++) {
+                    // out.print(i + ":\t" + DLX.instrString(program[i])); // \newline included in DLX.instrString()
+                }
+            } catch (IOException e) {
+                System.err.println("Error accessing the asm file: \"" + asmFile + "\"");
+                System.exit(-5);
+            }
+        }
 
-        // DLX.load(program);
-        // try {
-        //     DLX.execute(in);
-        // } catch (IOException e) {
-        //     e.printStackTrace();
-        //     System.err.println("IOException inside DLX");
-        //     System.exit(-6);
-        // }
+        /* DLX.load(program);
+        try {
+            DLX.execute(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("IOException inside DLX");
+            System.exit(-6);
+        } */
 
 
     }

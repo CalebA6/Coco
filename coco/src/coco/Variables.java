@@ -87,21 +87,26 @@ public class Variables {
 	
 	public Set<String> get(Token ident, boolean pseudo) throws NonexistantVariableException {
 		Set<String> type = new LinkedHashSet<>();
+		boolean gotSomething = false;
+		Exception error = null;
 		try {
 			type.add(table.get(ident));
-			return type;
+			gotSomething = true;
 		} catch(NonexistantVariableException e) {
-			if(functions.containsKey(ident.lexeme())) {
-				for(Function f: functions.get(ident.lexeme())) {
-					type.add(f.toString());
-				}
-				return type;
-			} else {
-				if(!pseudo) parent.reportError(e);
-				type.add("error");
-				return type;
-			}
+			error = e;
 		}
+		if(functions.containsKey(ident.lexeme())) {
+			for(Function f: functions.get(ident.lexeme())) {
+				type.add(f.toString());
+			}
+			gotSomething = true;
+		}
+		if(!gotSomething) {
+			if(!pseudo) parent.reportError(error);
+			type.add("error");
+			return type;
+		}
+		return type;
 	}
 	
 	public void add(Token name, String type) throws RedefinitionException {

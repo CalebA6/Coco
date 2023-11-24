@@ -1,7 +1,6 @@
 package coco;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,8 +14,11 @@ import java.util.Stack;
 import org.apache.commons.cli.CommandLine;
 
 import ast.AST;
+import code.Code;
+import code.Op;
 import ir.Block;
 import ir.Graph;
+import ir.Instruction;
 import reg.LiveRange;
 import reg.LiveRangeComparator;
 
@@ -25,6 +27,7 @@ public class Compiler {
 	private Scanner scanner;
 	private AST ast;
 	private List<Graph> functions;
+	private Map<Graph, Map<String, Integer>> regAllocs;
 
 	public Compiler(Scanner scanner, int numRegs) {
 		this.scanner = scanner;
@@ -69,6 +72,7 @@ public class Compiler {
 		 * get all variables and their live ranges
 		 * build graph (with array of ordered nodes)
 		 * */
+		regAllocs = new HashMap<>();
 		for(Graph function: functions) {
 			Map<String, LiveRange> nameToLv = new HashMap<>();
 			List<LiveRange> ranges = new LinkedList<>();
@@ -154,12 +158,346 @@ public class Compiler {
 				var.setReg(numReg);
 			}
 			
+			Map<String, Integer> allocs = new HashMap<>();
+			for(String var: nameToLv.keySet()) {
+				allocs.put(var, nameToLv.get(var).getReg());
+			}
+			regAllocs.put(function, allocs);
+			
 			// Testing: Prints Allocation
 			for(String var: nameToLv.keySet()) {
 				System.out.println(var + ": " + nameToLv.get(var).getReg());
 			}
 			System.out.println();
 		}
+	}
+	
+	public int[] genCode() {
+		if(regAllocs == null) regAlloc(27);
+		
+		/* int length = 0;
+		int mainLength = 0;
+		for(Graph function: functions) {
+			length += function.length();
+			if(function.getName().equals("main")) {
+				mainLength = function.length();
+			}
+		}
+		
+		int[] code = new int[length];
+		
+		Map<String, Integer> functionStarts = new HashMap<>();
+		functionStarts.put("main", 0);
+		int start = mainLength;
+		for(Graph function: functions) {
+			if(!function.getName().equals("main")) {
+				functionStarts.put(function.getName(), start);
+				start += function.length();
+			}
+		} */
+		
+		Map<Graph, List<Code>> functionCodes = new HashMap<>();
+		
+		for(Graph function: functions) {
+			Map<String, Integer> allocs = regAllocs.get(function);
+			List<Code> code = new ArrayList<>();
+			Map<Block, Set<Integer>> jumps = new HashMap<>();
+			Map<Block, Integer> starts = new HashMap<>();
+			
+			Block entry = function.getEntryBlock();
+			Queue<Block> blocks = new LinkedList<>();
+			Set<Block> visited = new HashSet<>();
+			blocks.add(entry);
+			while(!blocks.isEmpty()) {
+				Block block = blocks.remove();
+				if(visited.contains(block)) {
+					continue;
+				} else {
+					visited.add(block);
+				}
+				
+				starts.put(block, code.size());
+				if(jumps.containsKey(block)) {
+					for(int jump: jumps.get(block)) {
+						code.get(jump).setJump(code.size() - jump);
+					}
+				}
+				
+				for(Instruction instr: block) {
+					if(instr.isVoidCall() || instr.isCall()) {
+						if(instr.isVoidCall()) {
+							if(instr.assignee.startsWith("call printInt(")) {
+								String [] parameters = instr.getParameters();
+								if(parameters.length == 1) {
+									int r;
+									if(Token.isIdent(parameters[0])) {
+										if(allocs.containsKey(parameters[0])) {
+											r = allocs.get(parameters[0]);
+										} else {
+											r = 0;
+										}
+									} else {
+										code.add(new Code(Op.ADDI, 27, 0, Integer.parseInt(parameters[0])));
+										r = 27;
+									}
+									code.add(new Code(Op.WRI, 0, r, 0));
+								}
+							} else if(instr.assignee.startsWith("call printBool(")) {
+								String [] parameters = instr.getParameters();
+								if(parameters.length == 1) {
+									int r;
+									if(Token.isIdent(parameters[0])) {
+										if(allocs.containsKey(parameters[0])) {
+											r = allocs.get(parameters[0]);
+										} else {
+											r = 0;
+										}
+									} else {
+										int bool = 0;
+										if(parameters[0].equals("true")) bool = 1;
+										code.add(new Code(Op.ADDI, 27, 0, bool));
+										r = 27;
+									}
+									code.add(new Code(Op.WRI, 0, r, 0));
+								}
+							} else if(instr.assignee.equals("call println()")) {
+								code.add(new Code(Op.WRL, 0, 0, 0));
+							} else {
+								throw new RuntimeException("TODO: implement function calling");
+							}
+						} else {
+							if(instr.value1.equals("call readInt()")) {
+								code.add(new Code(Op.RDI, allocs.get(instr.assignee), 0, 0));
+							} else if(instr.value1.equals("call readBool()")) {
+								code.add(new Code(Op.RDB, allocs.get(instr.assignee), 0, 0));
+							} else {
+								throw new RuntimeException("TODO: implement function calling");
+							}
+						}
+					} else if(instr.isCopy()) {
+						if(Token.isIdent(instr.value1)) {
+							int assignment;
+							if(allocs.containsKey(instr.value1)) {
+								assignment = allocs.get(instr.value1);
+							} else {
+								assignment = 0;
+							}
+							code.add(new Code(Op.ADDI, allocs.get(instr.assignee), assignment, 0));
+						} else {
+							int value;
+							try {
+								value = Integer.parseInt(instr.value1);
+							} catch(NumberFormatException e) {
+								if(instr.value1.equals("true")) value = 1;
+								else value = 0;
+							}
+							code.add(new Code(Op.ADDI, allocs.get(instr.assignee), 0, value));
+						}
+					} else if(instr.isNot()) {
+						code.add(new Code(Op.ADDI, 27, 0, 1));
+						Op op;
+						int bool;
+						if(Token.isIdent(instr.value1)) {
+							if(allocs.containsKey(instr.value1)) { 
+								op = Op.BIC;
+								bool = allocs.get(instr.value1);
+							} else {
+								op = Op.BICI;
+								bool = 0;
+							}
+						} else {
+							op = Op.BICI;
+							if(instr.value1.equals("true")) bool = 1;
+							else bool = 0;
+						}
+						code.add(new Code(op, allocs.get(instr.assignee), 27, bool));
+					} else if(instr.isOp()) {
+						if(instr.isComparison()) {
+							int assignee = allocs.get(instr.assignee);
+							Op op;
+							int first;
+							int second;
+							if(Token.isIdent(instr.value1)) {
+								if(allocs.containsKey(instr.value1)) {
+									first = allocs.get(instr.value1);
+								} else {
+									first = 0;
+								}
+								if(Token.isIdent(instr.value2)) {
+									if(allocs.containsKey(instr.value2)) {
+										op = Op.CMP;
+										second = allocs.get(instr.value2);
+									} else {
+										op = Op.CMPI;
+										second = 0;
+									}
+								} else {
+									op = Op.CMPI;
+									second = Integer.parseInt(instr.value2);
+								}
+							} else {
+								code.add(new Code(Op.ADDI, assignee, 0, Integer.parseInt(instr.value1)));
+								first = assignee;
+								if(Token.isIdent(instr.value2)) {
+									if(allocs.containsKey(instr.value2)) {
+										op = Op.CMP;
+										second = allocs.get(instr.value2);
+									} else {
+										op = Op.CMPI;
+										second = 0;
+									}
+								} else {
+									op = Op.CMPI;
+									second = Integer.parseInt(instr.value2);
+								}
+							}
+							code.add(new Code(op, 27, first, second));
+							code.add(new Code(Op.ADDI, assignee, 0, 1));
+							switch(instr.op) {
+								case EQUAL: 
+									op = Op.BEQ;
+									break;
+								case NOT_EQUAL: 
+									op = Op.BNE;
+									break;
+								case LESS_EQUAL: 
+									op = Op.BLE;
+									break;
+								case GREATER_EQUAL: 
+									op = Op.BGE;
+									break;
+								case LESS: 
+									op = Op.BLT;
+									break;
+								case GREATER: 
+									op = Op.BGT;
+									break;
+								default: 
+									throw new RuntimeException("something had gone wrong");
+							}
+							code.add(new Code(op, 27, 0, 2));
+							code.add(new Code(Op.ADDI, assignee, 0, 0));
+						} else {
+							int assignee = allocs.get(instr.assignee);
+							Op op;
+							int first;
+							int second;
+							if(Token.isIdent(instr.value1)) {
+								if(allocs.containsKey(instr.value1)) {
+									first = allocs.get(instr.value1);
+								} else {
+									first = 0;
+								}
+								if(Token.isIdent(instr.value2)) {
+									if(allocs.containsKey(instr.value2)) {
+										op = Op.fromInstructOp(instr.op, false);
+										second = allocs.get(instr.value2);
+									} else {
+										op = Op.fromInstructOp(instr.op, true);
+										second = 0;
+									}
+								} else {
+									op = Op.fromInstructOp(instr.op, true);
+									try {
+										second = Integer.parseInt(instr.value2);
+									} catch(NumberFormatException e) {
+										if(instr.value2.equals("true")) second = 1;
+										else second = 0;
+									}
+								}
+							} else {
+								try {
+									first = Integer.parseInt(instr.value1);
+								} catch(NumberFormatException e) {
+									if(instr.value1.equals("true")) first = 1;
+									else first = 0;
+								}
+								code.add(new Code(Op.ADDI, assignee, 0, first));
+								first = assignee;
+								if(Token.isIdent(instr.value2)) {
+									if(allocs.containsKey(instr.value2)) {
+										op = Op.fromInstructOp(instr.op, false);
+										second = allocs.get(instr.value2);
+									} else {
+										op = Op.fromInstructOp(instr.op, true);
+										second = 0;
+									}
+								} else {
+									op = Op.fromInstructOp(instr.op, true);
+									try {
+										second = Integer.parseInt(instr.value2);
+									} catch(NumberFormatException e) {
+										if(instr.value2.equals("true")) second = 1;
+										else second = 0;
+									}
+								}
+							}
+							code.add(new Code(op, assignee, first, second));
+						}
+					} else if(instr.isJump()) {
+						Op op;
+						int decision = 0;
+						if(instr.isConditionalJump()) {
+							op = Op.BNE;
+							if(Token.isIdent(instr.value1)) {
+								if(allocs.containsKey(instr.value1)) {
+									decision = allocs.get(instr.value1);
+								} else {
+									decision = 0;
+								}
+							} else {
+								int bool = 0;
+								if(instr.value2.equals("true")) bool = 1;
+								code.add(new Code(Op.ADDI, 27, 0, bool));
+							}
+						} else {
+							op = Op.BSR;
+						}
+						
+						Block jumpBlock = instr.getJump().getBlock();
+						int jumpVector = 0;
+						if(starts.containsKey(jumpBlock)) {
+							jumpVector = starts.get(jumpBlock) - code.size();
+						} else {
+							if(!jumps.containsKey(jumpBlock)) {
+								jumps.put(jumpBlock, new HashSet<>());
+							}
+							jumps.get(jumpBlock).add(code.size());
+						}
+						
+						code.add(new Code(op, decision, 0, jumpVector));
+					} else if(instr.isExit()) {
+						code.add(new Code(Op.RET, 0, 0, 0));
+					}
+				}
+			}
+			
+			functionCodes.put(function, code);
+		}
+		
+		int length = 0;
+		for(List<Code> code: functionCodes.values()) {
+			length += code.size();
+		}
+		
+		int[] code = new int[length];
+		int next = 0;
+		for(Graph function: functionCodes.keySet()) {
+			if(function.getName().equals("main")) {
+				for(Code inst: functionCodes.get(function)) {
+					code[next++] = inst.gen();
+				}
+			}
+		}
+		for(Graph function: functionCodes.keySet()) {
+			if(!function.getName().equals("main")) {
+				for(Code inst: functionCodes.get(function)) {
+					code[next++] = inst.gen();
+				}
+			}
+		}
+		
+		return code;
 	}
 	
 	public boolean hasError() {
