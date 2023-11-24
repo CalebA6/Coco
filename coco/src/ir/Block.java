@@ -1,12 +1,15 @@
 package ir;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import coco.Token;
 
 public class Block implements Iterable<Instruction> {
 
@@ -73,7 +76,7 @@ public class Block implements Iterable<Instruction> {
 		varOut = new HashSet<>();
 	}
 	
-	protected boolean updateLiveVariables() {
+	public boolean updateLiveVariables() {
 		varOut = new HashSet<>();
 		for(Block after: successors) {
 			varOut.addAll(after.varIn);
@@ -91,10 +94,10 @@ public class Block implements Iterable<Instruction> {
 			if(instr.assignee != null) {
 				liveVariables.remove(instr.assignee);
 			}
-			if(instr.value1 != null) {
+			if(instr.value1 != null && Token.isIdent(instr.value1)) {
 				liveVariables.add(instr.value1);
 			}
-			if(instr.value2 != null) {
+			if(instr.value2 != null && Token.isIdent(instr.value2)) {
 				liveVariables.add(instr.value2);
 			}
 		}
@@ -113,7 +116,7 @@ public class Block implements Iterable<Instruction> {
 		return false;
 	}
 	
-	protected boolean updateAvailableExpressions() {
+	public boolean updateAvailableExpressions() {
 		expIn = new HashMap<>();
 		Map<String, Boolean> exprSeen = new HashMap<>();
 		boolean first = true;
@@ -432,13 +435,56 @@ public class Block implements Iterable<Instruction> {
 		return change;
 	}
 	
+	public List<Collection<String>> genLiveSets() {
+		varOut = new HashSet<>();
+		for(Block after: successors) {
+			varOut.addAll(after.varIn);
+		}
+		
+		Set<String> liveVariables = new HashSet<>();
+		liveVariables.addAll(varOut);
+		List<Collection<String>> liveSets = new ArrayList<>();
+		for(int i = numInstructions()-1; i>=0; --i) {
+			liveSets.add(0, new ArrayList<>(liveVariables));
+			Instruction instr = instructions.get(i);
+			if(instr.isCall() || instr.isVoidCall()) {
+				String function = instr.isCall() ? instr.value1 : instr.assignee;
+				liveVariables.addAll(functionParameters(function));
+				liveVariables.addAll(globalVariables);
+			}
+			boolean assigneeNeedsAllocation = false;
+			if(instr.assignee != null) {
+				if(!liveVariables.remove(instr.assignee)) {
+					assigneeNeedsAllocation = true;
+				}
+			}
+			if(instr.value1 != null && Token.isIdent(instr.value1)) {
+				liveVariables.add(instr.value1);
+			}
+			if(instr.value2 != null && Token.isIdent(instr.value2)) {
+				liveVariables.add(instr.value2);
+			}
+			liveSets.add(0, new ArrayList<>(liveVariables));
+			if(assigneeNeedsAllocation && Token.isIdent(instr.assignee)) {
+				liveSets.get(0).add(instr.assignee);
+			}
+		}
+		
+		liveSets.add(0, new ArrayList<>(liveVariables));
+		
+		return liveSets;
+	}
+	
 	private List<String> functionParameters(String functionCall) {
 		String afterClosing = functionCall.split("\\(")[1];
 		String parametersString = afterClosing.substring(0, afterClosing.length()-1);
 		String[] paramsUntrimed = parametersString.split(",");
 		List<String> params = new ArrayList<>();
 		for(String parameter: paramsUntrimed) {
-			params.add(parameter.trim());
+			String param = parameter.trim();
+			if(!param.equals("")) {
+				params.add(param);
+			}
 		}
 		return params;
 		

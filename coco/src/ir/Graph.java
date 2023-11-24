@@ -1,6 +1,7 @@
 package ir;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -169,6 +170,14 @@ public class Graph {
 			if(change) someChange = true;
 		}
 		return someChange;
+	}
+	
+	public Block getEntryBlock() {
+		return entry;
+	}
+	
+	public Collection<Block> getBlocks() {
+		return blocks;
 	}
 	
 	private void assignIndicies(List<Instruction> instructions) {

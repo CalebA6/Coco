@@ -151,8 +151,8 @@ public class CompilerTester {
             System.exit(-6);
         }
 
-        // //PA 8
-        // c.regAlloc(numRegs);
+        //PA 8
+        c.regAlloc(numRegs);
 
         // //PA 9
         // int[] program = c.genCode();
