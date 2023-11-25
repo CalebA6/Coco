@@ -119,7 +119,9 @@ public class Graph implements Iterable<Block> {
 				}
 			}
 			
-			for(Block block: blocks) {
+			Queue<Block> queued = new LinkedList<>();
+			queued.addAll(blocks);
+			for(Block block: queued) {
 				change = block.eliminateDeadCode() || change;
 			}
 			

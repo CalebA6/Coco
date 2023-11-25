@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import coco.Token;
-
 public class Block implements Iterable<Instruction> {
 
 	private static int index = 0;
@@ -52,8 +50,26 @@ public class Block implements Iterable<Instruction> {
 	}
 	
 	public void addSuccessor(Block successor) {
-		successors.add(successor);
-		successor.predeccessors.add(this);
+		if(successors.add(successor)) {
+			successor.addPredeccessor(this);
+		}
+	}
+	
+	public void addSuccessors(Collection<Block> successors) {
+		for(Block successor: successors) {
+			if(this.successors.add(successor)) {
+				successor.addPredeccessor(this);
+			}
+		}
+	}
+	
+	public void removeSuccessor(Block successor) {
+		if(successors.remove(successor) && (instructions.size() > 0)) {
+			Instruction last = instructions.get(instructions.size() - 1);
+			if(last.isJump() && (last.getJump().getBlock() == successor)) {
+				last.setJump(successor.getFirst());
+			}
+		}
 	}
 	
 	protected void addJumpSuccessor() {
@@ -68,6 +84,24 @@ public class Block implements Iterable<Instruction> {
 	
 	public Set<Block> getSuccessors() {
 		return successors;
+	}
+	
+	public void addPredeccessor(Block predeccessor) {
+		if(predeccessors.add(predeccessor)) {
+			predeccessor.addSuccessor(this);
+		}
+	}
+	
+	public void addPredeccessors(Collection<Block> predeccessors) {
+		for(Block predeccessor: predeccessors) {
+			if(this.predeccessors.add(predeccessor)) {
+				predeccessor.addSuccessor(this);
+			}
+		}
+	}
+	
+	public void removePredeccessor(Block predeccessor) {
+		successors.remove(predeccessor);
 	}
 	
 	public String getName() {
@@ -194,12 +228,12 @@ public class Block implements Iterable<Instruction> {
 					} else {
 						// Block has been emptied
 						for(Block predeccessor: predeccessors) {
-							predeccessor.successors.addAll(successors);
-							predeccessor.successors.remove(this);
+							predeccessor.addSuccessors(successors);
+							predeccessor.removeSuccessor(this);
 						}
 						for(Block successor: successors) {
-							successor.predeccessors.addAll(predeccessors);
-							successor.predeccessors.remove(this);
+							successor.addPredeccessors(predeccessors);
+							successor.removePredeccessor(this);
 							target.setJump(successor.getFirst());
 						}
 						graph.removeBlock(this);
@@ -274,6 +308,7 @@ public class Block implements Iterable<Instruction> {
 					instr.op = null;
 					instr.value2 = null;
 					change = true;
+					continue;
 				}
 				instr.value1 = Integer.toString(result);
 				instr.op = null;
@@ -348,9 +383,15 @@ public class Block implements Iterable<Instruction> {
 			} else {
 				if(instr.value1 != null && availConsts.containsKey(instr.value1)) {
 					instr.value1 = availConsts.get(instr.value1);
+					if(instr.value1.equals("e")) {
+						int yz = 114;
+					}
 					change = true;
 				}
 				if(instr.value2 != null && availConsts.containsKey(instr.value2)) {
+					if(instr.value2.equals("e")) {
+						int yz = 114;
+					}
 					instr.value2 = availConsts.get(instr.value2);
 					change = true;
 				}

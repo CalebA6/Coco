@@ -15,10 +15,6 @@ public class Code {
 	}
 	
 	public int gen() {
-		if(op.opCode == Op.BSR.opCode) {
-			int x = 42;
-		}
-		
 		if(op.opCode >= 64 || a >= 32 || a < 0 || b >= 32 || b < 0 || op.format > 3 || op.format < 1) {
 			throw new RuntimeException("Attempted to generate bad instruction");
 		}

@@ -193,18 +193,7 @@ public class Compiler {
 			Map<Block, Set<Integer>> jumps = new HashMap<>();
 			Map<Block, Integer> starts = new HashMap<>();
 			
-			// Block entry = function.getEntryBlock();
-			// Queue<Block> blocks = new LinkedList<>();
-			// Set<Block> visited = new HashSet<>();
-			// blocks.add(entry);
 			for(Block block: function) {
-				/* Block block = blocks.remove();
-				if(visited.contains(block)) {
-					continue;
-				} else {
-					visited.add(block);
-				} */
-				
 				starts.put(block, code.size());
 				if(jumps.containsKey(block)) {
 					for(int jump: jumps.get(block)) {
@@ -436,8 +425,9 @@ public class Compiler {
 								}
 							} else {
 								int bool = 0;
-								if(instr.value2.equals("true")) bool = 1;
+								if(instr.value1.equals("true")) bool = 1;
 								code.add(new Code(Op.ADDI, 27, 0, bool));
+								decision = 27;
 							}
 						} else {
 							op = Op.BSR;
@@ -459,8 +449,6 @@ public class Compiler {
 						code.add(new Code(Op.RET, 0, 0, 0));
 					}
 				}
-
-				// blocks.addAll(block.getSuccessors());
 			}
 			
 			functionCodes.put(function, code);
