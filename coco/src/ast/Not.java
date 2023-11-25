@@ -36,6 +36,10 @@ public class Not extends CheckableNode {
 		relation.checkFunctionCalls(parent);
 	}
 	
+	public Node genAST() {
+		return new Operation(null, relation.genAST(), "LogicalNot", not);
+	}
+	
 	public Type getType() {
 		return new BoolType();
 	}

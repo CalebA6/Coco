@@ -184,17 +184,17 @@ public class Compiler {
 			Map<Block, Set<Integer>> jumps = new HashMap<>();
 			Map<Block, Integer> starts = new HashMap<>();
 			
-			Block entry = function.getEntryBlock();
-			Queue<Block> blocks = new LinkedList<>();
-			Set<Block> visited = new HashSet<>();
-			blocks.add(entry);
-			while(!blocks.isEmpty()) {
-				Block block = blocks.remove();
+			// Block entry = function.getEntryBlock();
+			// Queue<Block> blocks = new LinkedList<>();
+			// Set<Block> visited = new HashSet<>();
+			// blocks.add(entry);
+			for(Block block: function) {
+				/* Block block = blocks.remove();
 				if(visited.contains(block)) {
 					continue;
 				} else {
 					visited.add(block);
-				}
+				} */
 				
 				starts.put(block, code.size());
 				if(jumps.containsKey(block)) {
@@ -210,7 +210,7 @@ public class Compiler {
 								String [] parameters = instr.getParameters();
 								if(parameters.length == 1) {
 									int r;
-									if(Token.isIdent(parameters[0])) {
+									if(Instruction.isVar(parameters[0])) {
 										if(allocs.containsKey(parameters[0])) {
 											r = allocs.get(parameters[0]);
 										} else {
@@ -226,7 +226,7 @@ public class Compiler {
 								String [] parameters = instr.getParameters();
 								if(parameters.length == 1) {
 									int r;
-									if(Token.isIdent(parameters[0])) {
+									if(Instruction.isVar(parameters[0])) {
 										if(allocs.containsKey(parameters[0])) {
 											r = allocs.get(parameters[0]);
 										} else {
@@ -255,7 +255,7 @@ public class Compiler {
 							}
 						}
 					} else if(instr.isCopy()) {
-						if(Token.isIdent(instr.value1)) {
+						if(Instruction.isVar(instr.value1)) {
 							int assignment;
 							if(allocs.containsKey(instr.value1)) {
 								assignment = allocs.get(instr.value1);
@@ -277,7 +277,7 @@ public class Compiler {
 						code.add(new Code(Op.ADDI, 27, 0, 1));
 						Op op;
 						int bool;
-						if(Token.isIdent(instr.value1)) {
+						if(Instruction.isVar(instr.value1)) {
 							if(allocs.containsKey(instr.value1)) { 
 								op = Op.BIC;
 								bool = allocs.get(instr.value1);
@@ -297,13 +297,13 @@ public class Compiler {
 							Op op;
 							int first;
 							int second;
-							if(Token.isIdent(instr.value1)) {
+							if(Instruction.isVar(instr.value1)) {
 								if(allocs.containsKey(instr.value1)) {
 									first = allocs.get(instr.value1);
 								} else {
 									first = 0;
 								}
-								if(Token.isIdent(instr.value2)) {
+								if(Instruction.isVar(instr.value2)) {
 									if(allocs.containsKey(instr.value2)) {
 										op = Op.CMP;
 										second = allocs.get(instr.value2);
@@ -316,9 +316,9 @@ public class Compiler {
 									second = Integer.parseInt(instr.value2);
 								}
 							} else {
-								code.add(new Code(Op.ADDI, assignee, 0, Integer.parseInt(instr.value1)));
-								first = assignee;
-								if(Token.isIdent(instr.value2)) {
+								code.add(new Code(Op.ADDI, 27, 0, Integer.parseInt(instr.value1)));
+								first = 27;
+								if(Instruction.isVar(instr.value2)) {
 									if(allocs.containsKey(instr.value2)) {
 										op = Op.CMP;
 										second = allocs.get(instr.value2);
@@ -362,13 +362,13 @@ public class Compiler {
 							Op op;
 							int first;
 							int second;
-							if(Token.isIdent(instr.value1)) {
+							if(Instruction.isVar(instr.value1)) {
 								if(allocs.containsKey(instr.value1)) {
 									first = allocs.get(instr.value1);
 								} else {
 									first = 0;
 								}
-								if(Token.isIdent(instr.value2)) {
+								if(Instruction.isVar(instr.value2)) {
 									if(allocs.containsKey(instr.value2)) {
 										op = Op.fromInstructOp(instr.op, false);
 										second = allocs.get(instr.value2);
@@ -392,9 +392,9 @@ public class Compiler {
 									if(instr.value1.equals("true")) first = 1;
 									else first = 0;
 								}
-								code.add(new Code(Op.ADDI, assignee, 0, first));
-								first = assignee;
-								if(Token.isIdent(instr.value2)) {
+								code.add(new Code(Op.ADDI, 27, 0, first));
+								first = 27;
+								if(Instruction.isVar(instr.value2)) {
 									if(allocs.containsKey(instr.value2)) {
 										op = Op.fromInstructOp(instr.op, false);
 										second = allocs.get(instr.value2);
@@ -419,7 +419,7 @@ public class Compiler {
 						int decision = 0;
 						if(instr.isConditionalJump()) {
 							op = Op.BNE;
-							if(Token.isIdent(instr.value1)) {
+							if(Instruction.isVar(instr.value1)) {
 								if(allocs.containsKey(instr.value1)) {
 									decision = allocs.get(instr.value1);
 								} else {
@@ -450,9 +450,17 @@ public class Compiler {
 						code.add(new Code(Op.RET, 0, 0, 0));
 					}
 				}
+
+				// blocks.addAll(block.getSuccessors());
 			}
 			
 			functionCodes.put(function, code);
+			
+			// Troubleshooting
+			/* System.out.println("### " + function.getName());
+			for(Code inst: code) {
+				System.out.println(inst);
+			} */
 		}
 		
 		int length = 0;

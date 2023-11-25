@@ -223,7 +223,7 @@ public class Token implements Location {
     	return true;
     }
     
-    public static boolean isIdent(String lexeme) {
+    private static boolean isIdent(String lexeme) {
     	if((lexeme.length() == 0) || !Character.isLetter(lexeme.charAt(0))) {
     		return false;
     	}

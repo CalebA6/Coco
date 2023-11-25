@@ -118,7 +118,7 @@ public class CompilerTester {
         String dotgraph_text = null;
         try {
             dotgraph_text = c.genSSA(ast).asDotGraph();
-            System.out.println(dotgraph_text);
+            // System.out.println(dotgraph_text);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Error caught - see stderr for stack trace " + e.getMessage());
@@ -166,7 +166,7 @@ public class CompilerTester {
             String asmFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_asm.txt";
             try (PrintStream out = new PrintStream(asmFile)) {
                 for (int i = 0; i < program.length; i++) {
-                    // out.print(i + ":\t" + DLX.instrString(program[i])); // \newline included in DLX.instrString()
+                    out.print(i + ":\t" + DLX.instrString(program[i])); // \newline included in DLX.instrString()
                 }
             } catch (IOException e) {
                 System.err.println("Error accessing the asm file: \"" + asmFile + "\"");
@@ -174,14 +174,14 @@ public class CompilerTester {
             }
         }
 
-        /* DLX.load(program);
+        DLX.load(program);
         try {
             DLX.execute(in);
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("IOException inside DLX");
             System.exit(-6);
-        } */
+        }
 
 
     }

@@ -26,8 +26,11 @@ public class Block implements Iterable<Instruction> {
 	
 	Set<String> globalVariables;
 	
-	public Block(Set<String> globalVariables) {
+	Graph graph;
+	
+	public Block(Set<String> globalVariables, Graph graph) {
 		this.globalVariables = globalVariables;
+		this.graph = graph;
 	}
 	
 	public void addInstruction(Instruction instruction) {
@@ -94,10 +97,10 @@ public class Block implements Iterable<Instruction> {
 			if(instr.assignee != null) {
 				liveVariables.remove(instr.assignee);
 			}
-			if(instr.value1 != null && Token.isIdent(instr.value1)) {
+			if(instr.value1 != null && Instruction.isVar(instr.value1)) {
 				liveVariables.add(instr.value1);
 			}
-			if(instr.value2 != null && Token.isIdent(instr.value2)) {
+			if(instr.value2 != null && Instruction.isVar(instr.value2)) {
 				liveVariables.add(instr.value2);
 			}
 		}
@@ -199,6 +202,7 @@ public class Block implements Iterable<Instruction> {
 							successor.predeccessors.remove(this);
 							target.setJump(successor.getFirst());
 						}
+						graph.removeBlock(this);
 					}
 				}
 				instructions.remove(i);
@@ -462,14 +466,14 @@ public class Block implements Iterable<Instruction> {
 					assigneeNeedsAllocation = true;
 				}
 			}
-			if(instr.value1 != null && Token.isIdent(instr.value1)) {
+			if(instr.value1 != null && Instruction.isVar(instr.value1)) {
 				liveVariables.add(instr.value1);
 			}
-			if(instr.value2 != null && Token.isIdent(instr.value2)) {
+			if(instr.value2 != null && Instruction.isVar(instr.value2)) {
 				liveVariables.add(instr.value2);
 			}
 			liveSets.add(0, new ArrayList<>(liveVariables));
-			if(assigneeNeedsAllocation && Token.isIdent(instr.assignee)) {
+			if(assigneeNeedsAllocation && Instruction.isVar(instr.assignee)) {
 				liveSets.get(0).add(instr.assignee);
 			}
 		}

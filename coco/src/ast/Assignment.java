@@ -33,7 +33,7 @@ public class Assignment extends CheckableNode {
 		if((assignOp.kind() == Kind.ASSIGN) || (assignOp.kind() == Kind.ADD_ASSIGN) || (assignOp.kind() == Kind.SUB_ASSIGN) || (assignOp.kind() == Kind.MUL_ASSIGN) || (assignOp.kind() == Kind.DIV_ASSIGN) || (assignOp.kind() == Kind.MOD_ASSIGN) || (assignOp.kind() == Kind.POW_ASSIGN)) {
 			operand = new Relation(source, variables).genAST();
 		} else if((assignOp.kind() == Kind.UNI_INC) || (assignOp.kind() == Kind.UNI_DEC)) {
-			operand = new Sum(assignee, assignOp).genAST();
+			operand = new Sum(assignee, assignOp, assignOp.kind() == Kind.UNI_INC).genAST();
 		} else {
 			throw new SyntaxException("Expected assignment operator but got " + assignOp.kind() + " .", assignOp);
 		}

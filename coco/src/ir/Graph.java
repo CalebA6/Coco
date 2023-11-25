@@ -3,12 +3,13 @@ package ir;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
-public class Graph {
+public class Graph implements Iterable<Block> {
 	
 	private String name;
 	private Block entry;
@@ -24,18 +25,18 @@ public class Graph {
 		addExit(instructions);
 		assignIndicies(instructions);
 		addJumpTargets(instructions);
-		Block block = entry = new Block(globalVariables);
+		Block block = entry = new Block(globalVariables, this);
 		blocks.add(block);
 		for(Instruction instr: instructions) {
 			if(instr.targeted()) {
-				Block newBlock = new Block(globalVariables);
+				Block newBlock = new Block(globalVariables, this);
 				block.addSuccessor(newBlock);
 				block = newBlock;
 				blocks.add(block);
 			}
 			block.addInstruction(instr);
 			if(instr.isJump()) {
-				Block newBlock = new Block(globalVariables);
+				Block newBlock = new Block(globalVariables, this);
 				if(instr.isConditionalJump()) block.addSuccessor(newBlock);
 				block = newBlock;
 				blocks.add(block);
@@ -192,6 +193,10 @@ public class Graph {
 		return blocks;
 	}
 	
+	protected void removeBlock(Block block) {
+		blocks.remove(block);
+	}
+	
 	private void assignIndicies(List<Instruction> instructions) {
 		int index = 0;
 		for(Instruction instr: instructions) {
@@ -253,6 +258,11 @@ public class Graph {
 		for(Block block: blocks) {
 			block.addJumpSuccessor();
 		}
+	}
+
+	@Override
+	public Iterator<Block> iterator() {
+		return new GraphIterator(blocks);
 	}
 	
 }

@@ -50,10 +50,18 @@ public class Operation extends CheckableNode {
 			} else {
 				return new BoolType();
 			}
+		} else if(opToken.kind() == Kind.NOT) {
+			if(!BoolType.is(right.getType())) {
+				ErrorType error = new ErrorType();
+				error.setError(opToken, "Cannot " + toString(opToken, left.getType().toString(), right.getType().toString()) + ".");
+				return error;
+			} else {
+				return new BoolType();
+			}
 		} else {
 			if(!NumberType.is(left.getType()) || !NumberType.is(right.getType())) {
 				ErrorType error = new ErrorType();
-				error.setError(opToken, "Cannot " + toString(opToken, left.getType().toString(), right.getType().toString()) + ".");
+				error.setError(opToken, "Cannot " + toString(opToken, right.getType().toString()) + ".");
 				return error;
 			} else {
 				if(operation.startsWith("Relation")) {
@@ -71,17 +79,20 @@ public class Operation extends CheckableNode {
 			reporter.reportError((ErrorType) opType);
 		}
 		
-		left.checkType(reporter, returnType, functionName);
+		if(opToken.kind() != Kind.NOT) left.checkType(reporter, returnType, functionName);
 		right.checkType(reporter, returnType, functionName);
 	}
 	
 	public ValueCode genCode(ir.Variables variables) {
 		List<Instruction> instructions = new ArrayList<>();
 		
-		ValueCode leftCode = left.genCode(variables);
-		ValueCode rightCode = right.genCode(variables);
+		ValueCode leftCode = null;
+		if(opToken.kind() != Kind.NOT) {
+			leftCode = left.genCode(variables);
+			instructions.addAll(leftCode.instructions);
+		}
 		
-		instructions.addAll(leftCode.instructions);
+		ValueCode rightCode = right.genCode(variables);
 		instructions.addAll(rightCode.instructions);
 		
 		String result = variables.getTemp();
@@ -128,6 +139,9 @@ public class Operation extends CheckableNode {
 			case POW: 
 				instructions.add(new Instruction(result, leftCode.returnValue, InstructType.POW, rightCode.returnValue));
 				break;
+			case NOT: 
+				instructions.add(new Instruction(result, InstructType.NOT, rightCode.returnValue));
+				break;
 			default: 
 				throw new RuntimeException("Unexpected Operation Found");
 		}
@@ -156,6 +170,11 @@ public class Operation extends CheckableNode {
 			default: 
 				return op.kind().name() + " " + left + " to " + right;
 		}
+	}
+	
+	private String toString(Token op, String right) {
+		if(op.kind() != Kind.NOT) throw new RuntimeException("Error in type checking implementation");
+		return "not " + right;
 	}
 	
 }

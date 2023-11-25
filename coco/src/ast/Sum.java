@@ -18,9 +18,9 @@ public class Sum extends CheckableNode {
 	private ArrayList<Token> operations = new ArrayList<>();
 	
 	// Increment
-	public Sum(Node var, Token op) {
+	public Sum(Node var, Token op, boolean up) {
 		operands.add(var);
-		Token add = new Token("+", op.lineNumber(), op.charPosition());
+		Token add = new Token(up ? "+" : "-", op.lineNumber(), op.charPosition());
 		operations.add(add);
 		operands.add(new Literal(new Token("1", op.lineNumber(), op.charPosition())));
 	}
