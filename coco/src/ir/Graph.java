@@ -135,7 +135,7 @@ public class Graph {
 		return change;
 	}
 	
-	public boolean propagateConstants() {
+	public boolean propagateAssignments(boolean consts) {
 		boolean someChange = false;
 		boolean change = true;
 		while(change) {
@@ -150,7 +150,7 @@ public class Graph {
 			}
 			
 			for(Block block: blocks) {
-				change = block.propagateConstants() || change;
+				change = block.propagateAssignments(consts) || change;
 			}
 			
 			if(change) someChange = true;

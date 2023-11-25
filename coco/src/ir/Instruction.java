@@ -266,4 +266,22 @@ public class Instruction {
 		return instr.toString();
 	}
 	
+	public static boolean isVar(String var) {
+    	if((var.length() == 0) || !Character.isLetter(var.charAt(0))) {
+    		return false;
+    	}
+    	
+    	for(int i=1; i<var.length(); ++i) {
+    		if(!Character.isLetterOrDigit(var.charAt(i)) && (var.charAt(i) != '_')) {
+    			return false;
+    		}
+    	}
+    	
+    	if(var.equals("true") || var.equals("false")) {
+    		return false;
+    	}
+    	
+    	return true;
+	}
+	
 }

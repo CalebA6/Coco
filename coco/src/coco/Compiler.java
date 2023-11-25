@@ -51,8 +51,9 @@ public class Compiler {
 				change = false;
 				if(optStrings.contains("dce") || optStrings.contains("max")) change = function.eliminateDeadCode() || change;
 				if(optStrings.contains("cf") || optStrings.contains("max")) change = function.foldConstants() || change;
-				if(optStrings.contains("cp") || optStrings.contains("max") || optStrings.contains("cpp")) change = function.propagateConstants() || change;
+				if(optStrings.contains("cp") || optStrings.contains("max")) change = function.propagateAssignments(true) || change;
 				if(optStrings.contains("cse") || optStrings.contains("max")) change = function.eliminateCommonSubexpressions() || change;
+				if(optStrings.contains("cpp") || optStrings.contains("max")) change = function.propagateAssignments(false) || change;
 			}
 		}
 		
@@ -165,36 +166,15 @@ public class Compiler {
 			regAllocs.put(function, allocs);
 			
 			// Testing: Prints Allocation
-			for(String var: nameToLv.keySet()) {
+			/* for(String var: nameToLv.keySet()) {
 				System.out.println(var + ": " + nameToLv.get(var).getReg());
 			}
-			System.out.println();
+			System.out.println(); */
 		}
 	}
 	
 	public int[] genCode() {
-		if(regAllocs == null) regAlloc(27);
-		
-		/* int length = 0;
-		int mainLength = 0;
-		for(Graph function: functions) {
-			length += function.length();
-			if(function.getName().equals("main")) {
-				mainLength = function.length();
-			}
-		}
-		
-		int[] code = new int[length];
-		
-		Map<String, Integer> functionStarts = new HashMap<>();
-		functionStarts.put("main", 0);
-		int start = mainLength;
-		for(Graph function: functions) {
-			if(!function.getName().equals("main")) {
-				functionStarts.put(function.getName(), start);
-				start += function.length();
-			}
-		} */
+		if(regAllocs == null) regAlloc(26);
 		
 		Map<Graph, List<Code>> functionCodes = new HashMap<>();
 		
@@ -434,7 +414,7 @@ public class Compiler {
 							}
 							code.add(new Code(op, assignee, first, second));
 						}
-					} else if(instr.isJump()) {
+					} else if(instr.isJump() && !instr.isReturn()) {
 						Op op;
 						int decision = 0;
 						if(instr.isConditionalJump()) {

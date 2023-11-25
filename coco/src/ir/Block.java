@@ -313,7 +313,7 @@ public class Block implements Iterable<Instruction> {
 		return change;
 	}
 	
-	public boolean propagateConstants() {
+	public boolean propagateAssignments(boolean consts) {
 		Map<String, String> availConsts = new HashMap<>();
 		copyMap(expIn, availConsts);
 		Set<String> nonConstantExpr = new HashSet<>();
@@ -321,6 +321,8 @@ public class Block implements Iterable<Instruction> {
 			if(availConsts.get(var).equals("#any")) {
 				nonConstantExpr.add(var);
 			} else if(!isConst(availConsts.get(var))) {
+				nonConstantExpr.add(var);
+			} else if((consts && Instruction.isVar(var)) || (!consts && !Instruction.isVar(var))) {
 				nonConstantExpr.add(var);
 			}
 		}
@@ -349,8 +351,10 @@ public class Block implements Iterable<Instruction> {
 					change = true;
 				}
 			}
-			if(instr.isCopy() && !instr.isCall()) {
+			if(instr.isCopy() && !instr.isCall() && ((consts && !Instruction.isVar(instr.value1)) || (!consts && Instruction.isVar(instr.value1)))) {
 				availConsts.put(instr.assignee, instr.value1);
+			} else if(instr.assignee != null) {
+				availConsts.remove(instr.assignee);
 			}
 		}
 		
