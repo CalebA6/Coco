@@ -101,9 +101,18 @@ public class Compiler {
 				List<Collection<String>> liveSets = block.genLiveSets();
 				if(liveSets.size() > 0) {
 					Collection<String> liveSet = liveSets.get(0);
-					for(String liveVar: liveSet) {
-						if(nameToLv.containsKey(liveVar)) {
-							nameToLv.get(liveVar).addBlock(block);
+					if(block == entry) {
+						for(String liveVar: liveSet) {
+							LiveRange varLv = new LiveRange(liveVar);
+							varLv.addStart(0, block);
+							nameToLv.put(liveVar, varLv);
+							ranges.add(varLv);
+						}
+					} else {
+						for(String liveVar: liveSet) {
+							if(nameToLv.containsKey(liveVar)) {
+								nameToLv.get(liveVar).addBlock(block);
+							}
 						}
 					}
 				}

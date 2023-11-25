@@ -69,10 +69,13 @@ public class Repeat extends CheckableNode {
 		ValueCode actionCode = action.genCode(variables);
 		
 		if(actionCode.instructions.size() > 0) {
-			Instruction jump = new Instruction(InstructType.JUMP, actionCode.instructions.get(0), decisionCode.returnValue);
+			String decisionTemp = variables.getTemp();
+			Instruction jumpDecision = new Instruction(decisionTemp, InstructType.NOT, decisionCode.returnValue);
+			Instruction jump = new Instruction(InstructType.JUMP, actionCode.instructions.get(0), decisionTemp);
 			
 			instructions.addAll(actionCode.instructions);
 			instructions.addAll(decisionCode.instructions);
+			instructions.add(jumpDecision);
 			instructions.add(jump);
 		} else {
 			instructions.addAll(decisionCode.instructions);

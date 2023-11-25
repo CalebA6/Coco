@@ -1,7 +1,5 @@
 package ast;
 
-import java.util.List;
-
 import coco.ErrorChecker;
 import coco.NonexistantVariableException;
 import coco.RedefinitionException;
@@ -9,7 +7,6 @@ import coco.ReversibleScanner;
 import coco.SyntaxException;
 import coco.Token;
 import coco.Variables;
-import ir.Instruction;
 import ir.ValueCode;
 import coco.Token.Kind;
 import types.Type;
