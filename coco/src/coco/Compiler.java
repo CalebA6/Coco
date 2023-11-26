@@ -33,6 +33,8 @@ public class Compiler {
 	private static final int FRAME_REG = 28;
 	private static final int STACK_REG = 29;
 	private static final int GLOBAL_REG = 30;
+	private static final int RETURN_REG = 31;
+	private static final int WORD_SIZE = 4;
 
 	public Compiler(Scanner scanner, int numRegs) {
 		this.scanner = scanner;
@@ -195,10 +197,13 @@ public class Compiler {
 		Map<String, Integer> globalOffsets = new HashMap<>();
 		int offset = 0;
 		for(String var: globalVariables) {
-			globalOffsets.put(var, offset -= 4);
+			globalOffsets.put(var, offset -= WORD_SIZE);
 		}
 		
 		Map<Graph, List<Code>> functionCodes = new HashMap<>();
+		// TODO: need to handle overloaded functions
+		// Map<String, Integer> functionLocations = new HashMap<>();
+		Map<String, Collection<Code>> functionCalls = new HashMap<>();
 		
 		for(Graph function: functions) {
 			Map<String, Integer> allocs = regAllocs.get(function);
@@ -206,17 +211,24 @@ public class Compiler {
 			Map<Block, Set<Integer>> jumps = new HashMap<>();
 			Map<Block, Integer> starts = new HashMap<>();
 			
+			/* functionLocations.put(function.getName(), code.size() * WORD_SIZE);
+			if(functionCalls.containsKey(function.getName())) {
+				for(Code call: functionCalls.get(function.getName())) {
+					call.setJump(code.size() * WORD_SIZE);
+				}
+			} */
+			
 			if(function.getName().equals("main")) {
 				code.add(new Code(Op.ADDI, FRAME_REG, GLOBAL_REG, offset));
 			}
 			
 			Map<String, Integer> frameOffsets = new HashMap<>();
-			offset = numReg * -4;
+			offset = numReg * -WORD_SIZE;
 			for(String var: allocs.keySet()) {
 				if(allocs.get(var) != 0) {
-					frameOffsets.put(var, allocs.get(var) * -4);
+					frameOffsets.put(var, allocs.get(var) * -WORD_SIZE);
 				} else {
-					frameOffsets.put(var, offset -= 4);
+					frameOffsets.put(var, offset -= WORD_SIZE);
 				}
 			}
 			VariableLoader varLoader = new VariableLoader(code, allocs, frameOffsets, globalOffsets);
@@ -265,6 +277,7 @@ public class Compiler {
 							} else if(instr.assignee.equals("call println()")) {
 								code.add(new Code(Op.WRL, 0, 0, 0));
 							} else {
+								
 								String [] parameters = instr.getParameters();
 								for(int param=0; param<parameters.length; ++param) {
 									int paramReg;
@@ -279,9 +292,21 @@ public class Compiler {
 											if(parameters[param].equals("true")) paramVal = 1;
 											else paramVal = 0;
 										}
+										code.add(new Code(Op.ADDI, TEMP_REG, 0, paramVal));
+										paramReg = TEMP_REG;
 									}
+									code.add(new Code(Op.STW, paramReg, STACK_REG, param * WORD_SIZE));
 								}
-								throw new RuntimeException("TODO: implement function calling");
+								
+								code.add(new Code(Op.STW, RETURN_REG, STACK_REG, parameters.length * WORD_SIZE));
+								code.add(new Code(Op.ADDI, FRAME_REG, STACK_REG, parameters.length * WORD_SIZE));
+								
+								Code jump = new Code(Op.JSR, -1);
+								code.add(jump);
+								if(!functionCalls.containsKey(instr.getFunctionName())) {
+									functionCalls.put(instr.getFunctionName(), new ArrayList<>());
+								}
+								functionCalls.get(instr.getFunctionName()).add(jump);
 							}
 						} else {
 							if(instr.value1.equals("call readInt()")) {
@@ -451,7 +476,7 @@ public class Compiler {
 								decision = TEMP_REG;
 							}
 						} else {
-							op = Op.BSR;
+							op = Op.BEQ;
 						}
 						
 						Block jumpBlock = instr.getJump().getBlock();
@@ -482,25 +507,34 @@ public class Compiler {
 			} */
 		}
 		
-		int length = 0;
-		for(List<Code> code: functionCodes.values()) {
-			length += code.size();
+		Map<String, Integer> functionSizes = new HashMap<>();
+		for(Graph function: functionCodes.keySet()) {
+			functionSizes.put(function.getName(), functionCodes.get(function).size());
 		}
 		
-		int[] code = new int[length];
-		int next = 0;
+		Map<String, Integer> functionLocations = new HashMap<>();
+		functionLocations.put("main", 0);
+		int location = functionSizes.get("main");
 		for(Graph function: functionCodes.keySet()) {
-			if(function.getName().equals("main")) {
-				for(Code inst: functionCodes.get(function)) {
-					code[next++] = inst.gen();
+			functionLocations.put(function.getName(), location);
+			location += functionSizes.get(function.getName());
+		}
+		
+		for(Graph function: functions) {
+			if(functionCalls.containsKey(function.getName())) {
+				for(Code call: functionCalls.get(function.getName())) {
+					call.setJump(functionLocations.get(function.getName()) * WORD_SIZE);
 				}
 			}
 		}
+		
+		int length = location;
+		int[] code = new int[length];
+		int next = 0;
 		for(Graph function: functionCodes.keySet()) {
-			if(!function.getName().equals("main")) {
-				for(Code inst: functionCodes.get(function)) {
-					code[next++] = inst.gen();
-				}
+			next = functionLocations.get(function.getName());
+			for(Code inst: functionCodes.get(function)) {
+				code[next++] = inst.gen();
 			}
 		}
 		

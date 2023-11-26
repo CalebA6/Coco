@@ -137,6 +137,21 @@ public class Instruction {
 		return false;
 	}
 	
+	public String getFunctionName() {
+		if(!isCall() && !isVoidCall()) {
+			throw new RuntimeException("Can only get the function name of a function");
+		}
+		
+		String callString;
+		if(isCall()) {
+			callString = value1;
+		} else {
+			callString = assignee;
+		}
+		
+		return callString.substring(5, callString.indexOf('('));
+	}
+	
 	public String[] getParameters() {
 		if(!isCall() && !isVoidCall()) {
 			throw new RuntimeException("Can only get the parameters of a function call");

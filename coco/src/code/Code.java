@@ -14,6 +14,11 @@ public class Code {
 		this.c = c;
 	}
 	
+	public Code(Op op, int c) {
+		this.op = op;
+		this.c = c;
+	}
+	
 	public int gen() {
 		if(op.opCode >= 64 || a >= 32 || a < 0 || b >= 32 || b < 0 || op.format > 3 || op.format < 1) {
 			throw new RuntimeException("Attempted to generate bad instruction");
@@ -30,6 +35,11 @@ public class Code {
 				throw new RuntimeException("Attempted to generate bad instruction");
 			}
 			return (op.opCode << 26) | ((31 & a) << 21) | ((31 & b) << 16) | (31 & c);
+		case 3: 
+			if(c >= 67108864 || c < 0) {
+				throw new RuntimeException("Attempted to generate bad instruction");
+			}
+			return (op.opCode << 26) | c;
 		}
 		
 		throw new RuntimeException("Unknown instruction format");
