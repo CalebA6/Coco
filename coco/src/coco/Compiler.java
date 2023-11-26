@@ -202,7 +202,6 @@ public class Compiler {
 		
 		Map<Graph, List<Code>> functionCodes = new HashMap<>();
 		// TODO: need to handle overloaded functions
-		// Map<String, Integer> functionLocations = new HashMap<>();
 		Map<String, Collection<Code>> functionCalls = new HashMap<>();
 		
 		for(Graph function: functions) {
@@ -210,13 +209,6 @@ public class Compiler {
 			List<Code> code = new ArrayList<>();
 			Map<Block, Set<Integer>> jumps = new HashMap<>();
 			Map<Block, Integer> starts = new HashMap<>();
-			
-			/* functionLocations.put(function.getName(), code.size() * WORD_SIZE);
-			if(functionCalls.containsKey(function.getName())) {
-				for(Code call: functionCalls.get(function.getName())) {
-					call.setJump(code.size() * WORD_SIZE);
-				}
-			} */
 			
 			if(function.getName().equals("main")) {
 				code.add(new Code(Op.ADDI, FRAME_REG, GLOBAL_REG, offset));
@@ -307,6 +299,10 @@ public class Compiler {
 									functionCalls.put(instr.getFunctionName(), new ArrayList<>());
 								}
 								functionCalls.get(instr.getFunctionName()).add(jump);
+								
+								code.add(new Code(Op.SUBI, FRAME_REG, FRAME_REG, parameters.length * WORD_SIZE + offset));
+								code.add(new Code(Op.LDW, RETURN_REG, STACK_REG, parameters.length * WORD_SIZE));
+								
 							}
 						} else {
 							if(instr.value1.equals("call readInt()")) {
@@ -493,7 +489,12 @@ public class Compiler {
 						code.add(new Code(op, decision, 0, jumpVector));
 						varLoader.push(decision, instr.value1);
 					} else if(instr.isExit()) {
-						code.add(new Code(Op.RET, 0, 0, 0));
+						if(function.getName().equals("main")) {
+							code.add(new Code(Op.RET, 0, 0, 0));
+						} else {
+							code.add(new Code(Op.SUBI, STACK_REG, FRAME_REG, offset));
+							code.add(new Code(Op.RET, 0, 0, RETURN_REG));
+						}
 					}
 				}
 			}
