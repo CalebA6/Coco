@@ -121,14 +121,24 @@ public class AST extends Node {
 	
 	public List<Graph> genIr() {
 		if(ir != null) return ir;
-		Set<String> globalVariables = new HashSet<>();
-		if(functions != null) globalVariables.addAll(functions.getNames());
-		if(varDeclarations != null) globalVariables.addAll(varDeclarations.getNames());
+		Set<String> globalVariables = getGlobals();
 		
 		List<Graph> graphs = functions == null ? new ArrayList<>() : functions.genIr(globalVariables);
 		if(action != null) graphs.add(new Graph("main", action.genCode(new ir.Variables(globalVariables)), globalVariables));
 		ir = graphs;
 		return graphs;
+	}
+	
+	public Set<String> getGlobals() {
+		Set<String> globalVariables = getGlobalVars();
+		if(functions != null) globalVariables.addAll(functions.getNames());
+		return globalVariables;
+	}
+	
+	public Set<String> getGlobalVars() {
+		Set<String> globalVariables = new HashSet<>();
+		if(varDeclarations != null) globalVariables.addAll(varDeclarations.getNames());
+		return globalVariables;
 	}
 	
 	public String asDotGraph() {

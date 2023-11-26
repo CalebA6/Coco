@@ -28,6 +28,11 @@ public class Compiler {
 	private AST ast;
 	private List<Graph> functions;
 	private Map<Graph, Map<String, Integer>> regAllocs;
+	private int numReg;
+	private static final int TEMP_REG = 27;
+	private static final int FRAME_REG = 28;
+	private static final int STACK_REG = 29;
+	private static final int GLOBAL_REG = 30;
 
 	public Compiler(Scanner scanner, int numRegs) {
 		this.scanner = scanner;
@@ -66,6 +71,7 @@ public class Compiler {
 	
 	public void regAlloc(int numReg) {
 		if(functions == null) functions = ast.genIr();
+		this.numReg = numReg;
 		
 		/* Design: 
 		 * Function params put into registers starting with R0 in order
@@ -185,6 +191,18 @@ public class Compiler {
 	public int[] genCode() {
 		if(regAllocs == null) regAlloc(26);
 		
+		Set<String> globalVariables = ast.getGlobalVars();
+		Map<String, Integer> globalOffsets = new HashMap<>();
+		int offset = -1;
+		for(String var: globalVariables) {
+			globalOffsets.put(var, offset -= 4);
+		}
+		
+		int estMaxProgramLength = 0;
+		for(Graph function: functions) {
+			estMaxProgramLength += function.length() * 3;
+		}
+		
 		Map<Graph, List<Code>> functionCodes = new HashMap<>();
 		
 		for(Graph function: functions) {
@@ -192,6 +210,22 @@ public class Compiler {
 			List<Code> code = new ArrayList<>();
 			Map<Block, Set<Integer>> jumps = new HashMap<>();
 			Map<Block, Integer> starts = new HashMap<>();
+			
+			Map<String, Integer> frameOffsets = new HashMap<>();
+			offset = numReg * 4;
+			for(String var: allocs.keySet()) {
+				if(allocs.get(var) != 0) {
+					frameOffsets.put(var, allocs.get(var) * -4);
+				} else {
+					frameOffsets.put(var, (offset += 4) * -1);
+				}
+			}
+			VariableLoader varLoader = new VariableLoader(code, allocs, frameOffsets, globalOffsets);
+			
+			if(function.getName().equals("main")) {
+				code.add(new Code(Op.ADDI, FRAME_REG, 0, estMaxProgramLength));
+			}
+			code.add(new Code(Op.ADDI, STACK_REG, FRAME_REG, offset * 4));
 			
 			for(Block block: function) {
 				starts.put(block, code.size());
@@ -209,34 +243,28 @@ public class Compiler {
 								if(parameters.length == 1) {
 									int r;
 									if(Instruction.isVar(parameters[0])) {
-										if(allocs.containsKey(parameters[0])) {
-											r = allocs.get(parameters[0]);
-										} else {
-											r = 0;
-										}
+										r = varLoader.load(parameters[0]);
 									} else {
-										code.add(new Code(Op.ADDI, 27, 0, Integer.parseInt(parameters[0])));
-										r = 27;
+										code.add(new Code(Op.ADDI, TEMP_REG, 0, Integer.parseInt(parameters[0])));
+										r = TEMP_REG;
 									}
 									code.add(new Code(Op.WRI, 0, r, 0));
+									varLoader.push(r, parameters[0]);
 								}
 							} else if(instr.assignee.startsWith("call printBool(")) {
 								String [] parameters = instr.getParameters();
 								if(parameters.length == 1) {
 									int r;
 									if(Instruction.isVar(parameters[0])) {
-										if(allocs.containsKey(parameters[0])) {
-											r = allocs.get(parameters[0]);
-										} else {
-											r = 0;
-										}
+										r = varLoader.load(parameters[0]);
 									} else {
 										int bool = 0;
 										if(parameters[0].equals("true")) bool = 1;
-										code.add(new Code(Op.ADDI, 27, 0, bool));
-										r = 27;
+										code.add(new Code(Op.ADDI, TEMP_REG, 0, bool));
+										r = TEMP_REG;
 									}
 									code.add(new Code(Op.WRI, 0, r, 0));
+									varLoader.push(r, parameters[0]);
 								}
 							} else if(instr.assignee.equals("call println()")) {
 								code.add(new Code(Op.WRL, 0, 0, 0));
@@ -245,22 +273,23 @@ public class Compiler {
 							}
 						} else {
 							if(instr.value1.equals("call readInt()")) {
-								code.add(new Code(Op.RDI, allocs.get(instr.assignee), 0, 0));
+								int assignee = varLoader.load(instr.assignee);
+								code.add(new Code(Op.RDI, assignee, 0, 0));
+								varLoader.push(assignee, instr.assignee);
 							} else if(instr.value1.equals("call readBool()")) {
-								code.add(new Code(Op.RDB, allocs.get(instr.assignee), 0, 0));
+								int assignee = varLoader.load(instr.assignee);
+								code.add(new Code(Op.RDB, assignee, 0, 0));
+								varLoader.push(assignee, instr.assignee);
 							} else {
 								throw new RuntimeException("TODO: implement function calling");
 							}
 						}
 					} else if(instr.isCopy()) {
+						int assignee = varLoader.load(instr.assignee);
 						if(Instruction.isVar(instr.value1)) {
-							int assignment;
-							if(allocs.containsKey(instr.value1)) {
-								assignment = allocs.get(instr.value1);
-							} else {
-								assignment = 0;
-							}
-							code.add(new Code(Op.ADDI, allocs.get(instr.assignee), assignment, 0));
+							int assignment = varLoader.load(instr.value1);
+							code.add(new Code(Op.ADDI, assignee, assignment, 0));
+							varLoader.push(assignment, instr.value1);
 						} else {
 							int value;
 							try {
@@ -269,67 +298,54 @@ public class Compiler {
 								if(instr.value1.equals("true")) value = 1;
 								else value = 0;
 							}
-							code.add(new Code(Op.ADDI, allocs.get(instr.assignee), 0, value));
+							code.add(new Code(Op.ADDI, assignee, 0, value));
 						}
+						varLoader.push(assignee, instr.assignee);
 					} else if(instr.isNot()) {
-						code.add(new Code(Op.ADDI, 27, 0, 1));
+						code.add(new Code(Op.ADDI, TEMP_REG, 0, 1));
 						Op op;
 						int bool;
 						if(Instruction.isVar(instr.value1)) {
-							if(allocs.containsKey(instr.value1)) { 
-								op = Op.BIC;
-								bool = allocs.get(instr.value1);
-							} else {
-								op = Op.BICI;
-								bool = 0;
-							}
+							op = Op.BIC;
+							bool = varLoader.load(instr.value1);
 						} else {
 							op = Op.BICI;
 							if(instr.value1.equals("true")) bool = 1;
 							else bool = 0;
 						}
-						code.add(new Code(op, allocs.get(instr.assignee), 27, bool));
+						int assignee = varLoader.load(instr.assignee);
+						code.add(new Code(op, assignee, TEMP_REG, bool));
+						if(Instruction.isVar(instr.value1)) varLoader.push(bool, instr.value1);
+						varLoader.push(assignee, instr.assignee);
 					} else if(instr.isOp()) {
 						if(instr.isComparison()) {
-							int assignee = allocs.get(instr.assignee);
 							Op op;
 							int first;
 							int second;
 							if(Instruction.isVar(instr.value1)) {
-								if(allocs.containsKey(instr.value1)) {
-									first = allocs.get(instr.value1);
-								} else {
-									first = 0;
-								}
+								first = varLoader.load(instr.value1);
 								if(Instruction.isVar(instr.value2)) {
-									if(allocs.containsKey(instr.value2)) {
-										op = Op.CMP;
-										second = allocs.get(instr.value2);
-									} else {
-										op = Op.CMPI;
-										second = 0;
-									}
+									op = Op.CMP;
+									second = varLoader.load(instr.value2);
 								} else {
 									op = Op.CMPI;
 									second = Integer.parseInt(instr.value2);
 								}
 							} else {
-								code.add(new Code(Op.ADDI, 27, 0, Integer.parseInt(instr.value1)));
-								first = 27;
+								code.add(new Code(Op.ADDI, TEMP_REG, 0, Integer.parseInt(instr.value1)));
+								first = TEMP_REG;
 								if(Instruction.isVar(instr.value2)) {
-									if(allocs.containsKey(instr.value2)) {
-										op = Op.CMP;
-										second = allocs.get(instr.value2);
-									} else {
-										op = Op.CMPI;
-										second = 0;
-									}
+									op = Op.CMP;
+									second = varLoader.load(instr.value2);
 								} else {
 									op = Op.CMPI;
 									second = Integer.parseInt(instr.value2);
 								}
 							}
-							code.add(new Code(op, 27, first, second));
+							code.add(new Code(op, TEMP_REG, first, second));
+							varLoader.push(first, instr.value1);
+							varLoader.push(second, instr.value2);
+							int assignee = varLoader.load(instr.assignee);
 							code.add(new Code(Op.ADDI, assignee, 0, 1));
 							switch(instr.op) {
 								case EQUAL: 
@@ -353,27 +369,19 @@ public class Compiler {
 								default: 
 									throw new RuntimeException("something had gone wrong");
 							}
-							code.add(new Code(op, 27, 0, 2));
+							code.add(new Code(op, TEMP_REG, 0, 2));
 							code.add(new Code(Op.ADDI, assignee, 0, 0));
+							varLoader.push(assignee, instr.assignee);
 						} else {
-							int assignee = allocs.get(instr.assignee);
+							int assignee;
 							Op op;
 							int first;
 							int second;
 							if(Instruction.isVar(instr.value1)) {
-								if(allocs.containsKey(instr.value1)) {
-									first = allocs.get(instr.value1);
-								} else {
-									first = 0;
-								}
+								first = varLoader.load(instr.value1);
 								if(Instruction.isVar(instr.value2)) {
-									if(allocs.containsKey(instr.value2)) {
-										op = Op.fromInstructOp(instr.op, false);
-										second = allocs.get(instr.value2);
-									} else {
-										op = Op.fromInstructOp(instr.op, true);
-										second = 0;
-									}
+									op = Op.fromInstructOp(instr.op, false);
+									second = varLoader.load(instr.value2);
 								} else {
 									op = Op.fromInstructOp(instr.op, true);
 									try {
@@ -390,16 +398,11 @@ public class Compiler {
 									if(instr.value1.equals("true")) first = 1;
 									else first = 0;
 								}
-								code.add(new Code(Op.ADDI, 27, 0, first));
-								first = 27;
+								code.add(new Code(Op.ADDI, TEMP_REG, 0, first));
+								first = TEMP_REG;
 								if(Instruction.isVar(instr.value2)) {
-									if(allocs.containsKey(instr.value2)) {
-										op = Op.fromInstructOp(instr.op, false);
-										second = allocs.get(instr.value2);
-									} else {
-										op = Op.fromInstructOp(instr.op, true);
-										second = 0;
-									}
+									op = Op.fromInstructOp(instr.op, false);
+									second = varLoader.load(instr.value2);
 								} else {
 									op = Op.fromInstructOp(instr.op, true);
 									try {
@@ -410,7 +413,17 @@ public class Compiler {
 									}
 								}
 							}
+							if(varLoader.isSpilled(instr.assignee) && (first == 25 && second == 26 || first == 26 && second == 25)) {
+								assignee = varLoader.specialLoad(instr.assignee, TEMP_REG);
+							} else {
+								assignee = varLoader.load(instr.assignee);
+							}
 							code.add(new Code(op, assignee, first, second));
+							if(assignee == TEMP_REG) {
+								varLoader.specialPush(assignee, instr.assignee);
+							} else {
+								varLoader.push(assignee, instr.assignee);
+							}
 						}
 					} else if(instr.isJump() && !instr.isReturn()) {
 						Op op;
@@ -418,16 +431,12 @@ public class Compiler {
 						if(instr.isConditionalJump()) {
 							op = Op.BNE;
 							if(Instruction.isVar(instr.value1)) {
-								if(allocs.containsKey(instr.value1)) {
-									decision = allocs.get(instr.value1);
-								} else {
-									decision = 0;
-								}
+								decision = varLoader.load(instr.value1);
 							} else {
 								int bool = 0;
 								if(instr.value1.equals("true")) bool = 1;
-								code.add(new Code(Op.ADDI, 27, 0, bool));
-								decision = 27;
+								code.add(new Code(Op.ADDI, TEMP_REG, 0, bool));
+								decision = TEMP_REG;
 							}
 						} else {
 							op = Op.BSR;
@@ -445,6 +454,7 @@ public class Compiler {
 						}
 						
 						code.add(new Code(op, decision, 0, jumpVector));
+						varLoader.push(decision, instr.value1);
 					} else if(instr.isExit()) {
 						code.add(new Code(Op.RET, 0, 0, 0));
 					}
