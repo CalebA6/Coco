@@ -193,14 +193,9 @@ public class Compiler {
 		
 		Set<String> globalVariables = ast.getGlobalVars();
 		Map<String, Integer> globalOffsets = new HashMap<>();
-		int offset = -1;
+		int offset = 0;
 		for(String var: globalVariables) {
 			globalOffsets.put(var, offset -= 4);
-		}
-		
-		int estMaxProgramLength = 0;
-		for(Graph function: functions) {
-			estMaxProgramLength += function.length() * 3;
 		}
 		
 		Map<Graph, List<Code>> functionCodes = new HashMap<>();
@@ -211,21 +206,22 @@ public class Compiler {
 			Map<Block, Set<Integer>> jumps = new HashMap<>();
 			Map<Block, Integer> starts = new HashMap<>();
 			
+			if(function.getName().equals("main")) {
+				code.add(new Code(Op.ADDI, FRAME_REG, GLOBAL_REG, offset));
+			}
+			
 			Map<String, Integer> frameOffsets = new HashMap<>();
-			offset = numReg * 4;
+			offset = numReg * -4;
 			for(String var: allocs.keySet()) {
 				if(allocs.get(var) != 0) {
 					frameOffsets.put(var, allocs.get(var) * -4);
 				} else {
-					frameOffsets.put(var, (offset += 4) * -1);
+					frameOffsets.put(var, offset -= 4);
 				}
 			}
 			VariableLoader varLoader = new VariableLoader(code, allocs, frameOffsets, globalOffsets);
 			
-			if(function.getName().equals("main")) {
-				code.add(new Code(Op.ADDI, FRAME_REG, 0, estMaxProgramLength));
-			}
-			code.add(new Code(Op.ADDI, STACK_REG, FRAME_REG, offset * 4));
+			code.add(new Code(Op.ADDI, STACK_REG, FRAME_REG, offset));
 			
 			for(Block block: function) {
 				starts.put(block, code.size());
@@ -269,6 +265,22 @@ public class Compiler {
 							} else if(instr.assignee.equals("call println()")) {
 								code.add(new Code(Op.WRL, 0, 0, 0));
 							} else {
+								String [] parameters = instr.getParameters();
+								for(int param=0; param<parameters.length; ++param) {
+									int paramReg;
+									if(Instruction.isVar(parameters[param])) {
+										paramReg = varLoader.load(parameters[param]);
+									} else {
+										int paramVal;
+										try {
+											paramVal = Integer.parseInt(parameters[param]);
+											code.add(new Code(Op.ADDI, TEMP_REG, 0, paramVal));
+										} catch(NumberFormatException e) {
+											if(parameters[param].equals("true")) paramVal = 1;
+											else paramVal = 0;
+										}
+									}
+								}
 								throw new RuntimeException("TODO: implement function calling");
 							}
 						} else {
