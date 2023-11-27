@@ -275,46 +275,7 @@ public class Compiler {
 							} else if(instr.assignee.equals("call println()")) {
 								code.add(new Code(Op.WRL, 0, 0, 0));
 							} else {
-								
-								String [] parameters = instr.getParameters();
-								for(int paramIndex=0; paramIndex<parameters.length; ++paramIndex) {
-									String param = parameters[paramIndex].trim();
-									int paramReg;
-									if(Instruction.isVar(param)) {
-										paramReg = varLoader.load(param);
-									} else {
-										int paramVal;
-										try {
-											paramVal = Integer.parseInt(param);
-											code.add(new Code(Op.ADDI, TEMP_REG, 0, paramVal));
-										} catch(NumberFormatException e) {
-											if(param.equals("true")) paramVal = 1;
-											else paramVal = 0;
-										}
-										code.add(new Code(Op.ADDI, TEMP_REG, 0, paramVal));
-										paramReg = TEMP_REG;
-									}
-									code.add(new Code(Op.STW, paramReg, STACK_REG, paramIndex * -WORD_SIZE));
-								}
-								
-								varLoader.save();
-								
-								code.add(new Code(Op.STW, RETURN_REG, STACK_REG, parameters.length * -WORD_SIZE));
-								code.add(new Code(Op.ADDI, FRAME_REG, STACK_REG, parameters.length * -WORD_SIZE));
-								
-								Code jump = new Code(Op.JSR, -1);
-								code.add(jump);
-								if(!functionCalls.containsKey(instr.getFunctionName())) {
-									functionCalls.put(instr.getFunctionName(), new ArrayList<>());
-								}
-								functionCalls.get(instr.getFunctionName()).add(jump);
-								
-								code.add(new Code(Op.SUBI, STACK_REG, FRAME_REG, parameters.length * -WORD_SIZE));
-								code.add(new Code(Op.SUBI, FRAME_REG, STACK_REG, offset));
-								code.add(new Code(Op.LDW, RETURN_REG, STACK_REG, parameters.length * -WORD_SIZE));
-								
-								varLoader.restore();
-								
+								callFunction(instr, code, varLoader, functionCalls, offset);
 							}
 						} else {
 							if(instr.value1.equals("call readInt()")) {
@@ -326,48 +287,8 @@ public class Compiler {
 								code.add(new Code(Op.RDB, assignee, 0, 0));
 								varLoader.push(assignee, instr.assignee);
 							} else {
-
-								String [] parameters = instr.getParameters();
-								for(int paramIndex=0; paramIndex<parameters.length; ++paramIndex) {
-									String param = parameters[paramIndex].trim();
-									int paramReg;
-									if(Instruction.isVar(param)) {
-										paramReg = varLoader.load(param);
-									} else {
-										int paramVal;
-										try {
-											paramVal = Integer.parseInt(param);
-											code.add(new Code(Op.ADDI, TEMP_REG, 0, paramVal));
-										} catch(NumberFormatException e) {
-											if(param.equals("true")) paramVal = 1;
-											else paramVal = 0;
-										}
-										code.add(new Code(Op.ADDI, TEMP_REG, 0, paramVal));
-										paramReg = TEMP_REG;
-									}
-									code.add(new Code(Op.STW, paramReg, STACK_REG, paramIndex * -WORD_SIZE));
-								}
-								
-								varLoader.save();
-								
-								code.add(new Code(Op.STW, RETURN_REG, STACK_REG, parameters.length * -WORD_SIZE));
-								code.add(new Code(Op.ADDI, FRAME_REG, STACK_REG, parameters.length * -WORD_SIZE));
-								
-								Code jump = new Code(Op.JSR, -1);
-								code.add(jump);
-								if(!functionCalls.containsKey(instr.getFunctionName())) {
-									functionCalls.put(instr.getFunctionName(), new ArrayList<>());
-								}
-								functionCalls.get(instr.getFunctionName()).add(jump);
-								
-								code.add(new Code(Op.SUBI, STACK_REG, FRAME_REG, parameters.length * -WORD_SIZE));
-								code.add(new Code(Op.SUBI, FRAME_REG, STACK_REG, offset));
-								code.add(new Code(Op.LDW, RETURN_REG, STACK_REG, parameters.length * -WORD_SIZE));
-								
-								varLoader.restore();
-								
+								callFunction(instr, code, varLoader, functionCalls, offset);
 								varLoader.install(instr.assignee, 0);
-								
 							}
 						}
 					} else if(instr.isCopy()) {
@@ -619,6 +540,46 @@ public class Compiler {
 		}
 		
 		return code;
+	}
+	
+	private void callFunction(Instruction instr, List<Code> code, VariableLoader varLoader, Map<String, Collection<Code>> functionCalls, int offset) {
+		String [] parameters = instr.getParameters();
+		for(int paramIndex=0; paramIndex<parameters.length; ++paramIndex) {
+			String param = parameters[paramIndex].trim();
+			int paramReg;
+			if(Instruction.isVar(param)) {
+				paramReg = varLoader.load(param);
+			} else {
+				int paramVal;
+				try {
+					paramVal = Integer.parseInt(param);
+				} catch(NumberFormatException e) {
+					if(param.equals("true")) paramVal = 1;
+					else paramVal = 0;
+				}
+				code.add(new Code(Op.ADDI, TEMP_REG, 0, paramVal));
+				paramReg = TEMP_REG;
+			}
+			code.add(new Code(Op.STW, paramReg, STACK_REG, paramIndex * -WORD_SIZE));
+		}
+		
+		varLoader.save();
+		
+		code.add(new Code(Op.STW, RETURN_REG, STACK_REG, parameters.length * -WORD_SIZE));
+		code.add(new Code(Op.ADDI, FRAME_REG, STACK_REG, parameters.length * -WORD_SIZE));
+		
+		Code jump = new Code(Op.JSR, -1);
+		code.add(jump);
+		if(!functionCalls.containsKey(instr.getFunctionName())) {
+			functionCalls.put(instr.getFunctionName(), new ArrayList<>());
+		}
+		functionCalls.get(instr.getFunctionName()).add(jump);
+		
+		code.add(new Code(Op.SUBI, STACK_REG, FRAME_REG, parameters.length * -WORD_SIZE));
+		code.add(new Code(Op.SUBI, FRAME_REG, STACK_REG, offset));
+		code.add(new Code(Op.LDW, RETURN_REG, STACK_REG, parameters.length * -WORD_SIZE));
+		
+		varLoader.restore();
 	}
 	
 	public boolean hasError() {
