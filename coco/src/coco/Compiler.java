@@ -1,6 +1,7 @@
 package coco;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -215,12 +216,16 @@ public class Compiler {
 			}
 			
 			Map<String, Integer> frameOffsets = new HashMap<>();
+			String[] funcParams = function.getParameters();
+			Set<String> funcParamsSet = new HashSet<>(Arrays.asList(funcParams));
 			offset = numReg * -WORD_SIZE;
 			for(String var: allocs.keySet()) {
-				if(allocs.get(var) != 0) {
-					frameOffsets.put(var, allocs.get(var) * -WORD_SIZE);
-				} else {
-					frameOffsets.put(var, offset -= WORD_SIZE);
+				if(!globalVariables.contains(var) || funcParamsSet.contains(var)) {
+					if(allocs.get(var) != 0) {
+						frameOffsets.put(var, allocs.get(var) * -WORD_SIZE);
+					} else {
+						frameOffsets.put(var, offset -= WORD_SIZE);
+					}
 				}
 			}
 			
@@ -228,7 +233,6 @@ public class Compiler {
 			
 			VariableLoader varLoader = new VariableLoader(code, allocs, frameOffsets, globalOffsets);
 			
-			String[] funcParams = function.getParameters();
 			for(int param=0; param<funcParams.length; ++param) {
 				varLoader.install(funcParams[param], (funcParams.length - param) * WORD_SIZE - offset);
 			}
