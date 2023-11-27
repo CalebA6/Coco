@@ -40,7 +40,7 @@ public class VariableLoader {
 	
 	public int specialLoad(String var, int reg) {
 		if(funcVarOffsets.containsKey(var)) {
-			code.add(new Code(Op.LDW, reg, Compiler.STACK_REG, funcVarOffsets.get(var)));
+			code.add(new Code(Op.LDW, reg, Compiler.FRAME_REG, funcVarOffsets.get(var)));
 			return currentReg;
 		} else if(globalVarOffsets.containsKey(var)) {
 			code.add(new Code(Op.LDW, reg, Compiler.GLOBAL_REG, globalVarOffsets.get(var)));
@@ -54,7 +54,7 @@ public class VariableLoader {
 		int pointerReg;
 		int offset;
 		if(funcVarOffsets.containsKey(var)) {
-			pointerReg = Compiler.STACK_REG;
+			pointerReg = Compiler.FRAME_REG;
 			offset = funcVarOffsets.get(var);
 		} else {
 			pointerReg = Compiler.GLOBAL_REG;
@@ -68,9 +68,25 @@ public class VariableLoader {
 			code.add(new Code(Op.LDW, regAllocs.get(var), Compiler.STACK_REG, offset));
 		} else if(funcVarOffsets.containsKey(var)) {
 			code.add(new Code(Op.LDW, Compiler.TEMP_REG, Compiler.STACK_REG, offset));
-			code.add(new Code(Op.STW, Compiler.TEMP_REG, Compiler.STACK_REG, funcVarOffsets.get(var)));
+			code.add(new Code(Op.STW, Compiler.TEMP_REG, Compiler.FRAME_REG, funcVarOffsets.get(var)));
 		} else {
 			throw new RuntimeException("Unaccounted for parameter: " + var);
+		}
+	}
+	
+	public void save() {
+		for(String var: funcVarOffsets.keySet()) {
+			if(!isSpilled(var)) {
+				specialPush(regAllocs.get(var), var);
+			}
+		}
+	}
+	
+	public void restore() {
+		for(String var: funcVarOffsets.keySet()) {
+			if(!isSpilled(var)) {
+				specialLoad(var, regAllocs.get(var));
+			}
 		}
 	}
 	
