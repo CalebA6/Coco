@@ -40,10 +40,10 @@ public class VariableLoader {
 	
 	public int specialLoad(String var, int reg) {
 		if(funcVarOffsets.containsKey(var)) {
-			code.add(new Code(Op.LDW, reg, 29, funcVarOffsets.get(var)));
+			code.add(new Code(Op.LDW, reg, Compiler.STACK_REG, funcVarOffsets.get(var)));
 			return currentReg;
 		} else if(globalVarOffsets.containsKey(var)) {
-			code.add(new Code(Op.LDW, reg, 30, globalVarOffsets.get(var)));
+			code.add(new Code(Op.LDW, reg, Compiler.GLOBAL_REG, globalVarOffsets.get(var)));
 			return currentReg;
 		} else {
 			return 0;
@@ -54,13 +54,24 @@ public class VariableLoader {
 		int pointerReg;
 		int offset;
 		if(funcVarOffsets.containsKey(var)) {
-			pointerReg = 29;
+			pointerReg = Compiler.STACK_REG;
 			offset = funcVarOffsets.get(var);
 		} else {
-			pointerReg = 30;
+			pointerReg = Compiler.GLOBAL_REG;
 			offset = globalVarOffsets.get(var);
 		}
 		code.add(new Code(Op.STW, reg, pointerReg, offset));
+	}
+	
+	public void install(String var, int offset) {
+		if(regAllocs.containsKey(var)) {
+			code.add(new Code(Op.LDW, regAllocs.get(var), Compiler.STACK_REG, offset));
+		} else if(funcVarOffsets.containsKey(var)) {
+			code.add(new Code(Op.LDW, Compiler.TEMP_REG, Compiler.STACK_REG, offset));
+			code.add(new Code(Op.STW, Compiler.TEMP_REG, Compiler.STACK_REG, funcVarOffsets.get(var)));
+		} else {
+			throw new RuntimeException("Unaccounted for parameter: " + var);
+		}
 	}
 	
 }

@@ -29,12 +29,12 @@ public class Compiler {
 	private List<Graph> functions;
 	private Map<Graph, Map<String, Integer>> regAllocs;
 	private int numReg;
-	private static final int TEMP_REG = 27;
-	private static final int FRAME_REG = 28;
-	private static final int STACK_REG = 29;
-	private static final int GLOBAL_REG = 30;
-	private static final int RETURN_REG = 31;
-	private static final int WORD_SIZE = 4;
+	static final int TEMP_REG = 27;
+	static final int FRAME_REG = 28;
+	static final int STACK_REG = 29;
+	static final int GLOBAL_REG = 30;
+	static final int RETURN_REG = 31;
+	static final int WORD_SIZE = 4;
 
 	public Compiler(Scanner scanner, int numRegs) {
 		this.scanner = scanner;
@@ -223,9 +223,15 @@ public class Compiler {
 					frameOffsets.put(var, offset -= WORD_SIZE);
 				}
 			}
-			VariableLoader varLoader = new VariableLoader(code, allocs, frameOffsets, globalOffsets);
 			
 			code.add(new Code(Op.ADDI, STACK_REG, FRAME_REG, offset));
+			
+			VariableLoader varLoader = new VariableLoader(code, allocs, frameOffsets, globalOffsets);
+			
+			String[] funcParams = function.getParameters();
+			for(int param=0; param<funcParams.length; ++param) {
+				varLoader.install(funcParams[param], (funcParams.length - param) * WORD_SIZE - offset);
+			}
 			
 			for(Block block: function) {
 				starts.put(block, code.size());
@@ -271,27 +277,28 @@ public class Compiler {
 							} else {
 								
 								String [] parameters = instr.getParameters();
-								for(int param=0; param<parameters.length; ++param) {
+								for(int paramIndex=0; paramIndex<parameters.length; ++paramIndex) {
+									String param = parameters[paramIndex].trim();
 									int paramReg;
-									if(Instruction.isVar(parameters[param])) {
-										paramReg = varLoader.load(parameters[param]);
+									if(Instruction.isVar(param)) {
+										paramReg = varLoader.load(param);
 									} else {
 										int paramVal;
 										try {
-											paramVal = Integer.parseInt(parameters[param]);
+											paramVal = Integer.parseInt(param);
 											code.add(new Code(Op.ADDI, TEMP_REG, 0, paramVal));
 										} catch(NumberFormatException e) {
-											if(parameters[param].equals("true")) paramVal = 1;
+											if(param.equals("true")) paramVal = 1;
 											else paramVal = 0;
 										}
 										code.add(new Code(Op.ADDI, TEMP_REG, 0, paramVal));
 										paramReg = TEMP_REG;
 									}
-									code.add(new Code(Op.STW, paramReg, STACK_REG, param * WORD_SIZE));
+									code.add(new Code(Op.STW, paramReg, STACK_REG, paramIndex * -WORD_SIZE));
 								}
 								
-								code.add(new Code(Op.STW, RETURN_REG, STACK_REG, parameters.length * WORD_SIZE));
-								code.add(new Code(Op.ADDI, FRAME_REG, STACK_REG, parameters.length * WORD_SIZE));
+								code.add(new Code(Op.STW, RETURN_REG, STACK_REG, parameters.length * -WORD_SIZE));
+								code.add(new Code(Op.ADDI, FRAME_REG, STACK_REG, parameters.length * -WORD_SIZE));
 								
 								Code jump = new Code(Op.JSR, -1);
 								code.add(jump);
@@ -300,8 +307,9 @@ public class Compiler {
 								}
 								functionCalls.get(instr.getFunctionName()).add(jump);
 								
-								code.add(new Code(Op.SUBI, FRAME_REG, FRAME_REG, parameters.length * WORD_SIZE + offset));
-								code.add(new Code(Op.LDW, RETURN_REG, STACK_REG, parameters.length * WORD_SIZE));
+								code.add(new Code(Op.SUBI, STACK_REG, FRAME_REG, parameters.length * -WORD_SIZE));
+								code.add(new Code(Op.SUBI, FRAME_REG, STACK_REG, offset));
+								code.add(new Code(Op.LDW, RETURN_REG, STACK_REG, parameters.length * -WORD_SIZE));
 								
 							}
 						} else {
@@ -492,7 +500,6 @@ public class Compiler {
 						if(function.getName().equals("main")) {
 							code.add(new Code(Op.RET, 0, 0, 0));
 						} else {
-							code.add(new Code(Op.SUBI, STACK_REG, FRAME_REG, offset));
 							code.add(new Code(Op.RET, 0, 0, RETURN_REG));
 						}
 					}
@@ -505,7 +512,8 @@ public class Compiler {
 			/* System.out.println("### " + function.getName());
 			for(Code inst: code) {
 				System.out.println(inst);
-			} */
+			}
+			System.out.println(); */
 		}
 		
 		Map<String, Integer> functionSizes = new HashMap<>();
@@ -517,8 +525,10 @@ public class Compiler {
 		functionLocations.put("main", 0);
 		int location = functionSizes.get("main");
 		for(Graph function: functionCodes.keySet()) {
-			functionLocations.put(function.getName(), location);
-			location += functionSizes.get(function.getName());
+			if(!function.getName().equals("main")) {
+				functionLocations.put(function.getName(), location);
+				location += functionSizes.get(function.getName());
+			}
 		}
 		
 		for(Graph function: functions) {
@@ -535,6 +545,7 @@ public class Compiler {
 		for(Graph function: functionCodes.keySet()) {
 			next = functionLocations.get(function.getName());
 			for(Code inst: functionCodes.get(function)) {
+				// System.out.println(next + ": " + inst);
 				code[next++] = inst.gen();
 			}
 		}

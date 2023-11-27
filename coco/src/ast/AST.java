@@ -124,7 +124,7 @@ public class AST extends Node {
 		Set<String> globalVariables = getGlobals();
 		
 		List<Graph> graphs = functions == null ? new ArrayList<>() : functions.genIr(globalVariables);
-		if(action != null) graphs.add(new Graph("main", action.genCode(new ir.Variables(globalVariables)), globalVariables));
+		if(action != null) graphs.add(new Graph("main", action.genCode(new ir.Variables(globalVariables)), new String[0], globalVariables));
 		ir = graphs;
 		return graphs;
 	}

@@ -33,7 +33,7 @@ public class Parameters /*extends Traversible*/ {
 		ErrorChecker.mustBe(Kind.CLOSE_PAREN, "CLOSE_PAREN", source);
 	}
 	
-	public Collection<String> getNames() {
+	public List<String> getNames() {
 		List<String> names = new ArrayList<>();
 		for(Parameter parameter: parameters) {
 			names.add(parameter.getName().lexeme());

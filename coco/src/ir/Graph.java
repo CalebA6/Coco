@@ -12,11 +12,13 @@ import java.util.Set;
 public class Graph implements Iterable<Block> {
 	
 	private String name;
+	private String[] parameters;
 	private Block entry;
 	private List<Block> blocks = new ArrayList<>();
 	
-	public Graph(String function, ValueCode code, Set<String> globalVariables) {
+	public Graph(String function, ValueCode code, String[] parameters, Set<String> globalVariables) {
 		name = function;
+		this.parameters = parameters;
 		
 		List<Instruction> instructions = code.instructions;
 		assignIndicies(instructions);
@@ -47,6 +49,10 @@ public class Graph implements Iterable<Block> {
 	
 	public String getName() {
 		return name;
+	}
+	
+	public String[] getParameters() {
+		return parameters;
 	}
 	
 	public int length() {
