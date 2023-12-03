@@ -724,6 +724,16 @@ public class Block implements Iterable<Instruction> {
 		}
 	}
 	
+	public Collection<String> functionsCalled() {
+		Set<String> functions = new HashSet<>();
+		for(Instruction instr: this) {
+			if(instr.isCall() || instr.isVoidCall()) {
+				functions.add(instr.getSignature());
+			}
+		}
+		return functions;
+	}
+	
 	public List<Collection<String>> genLiveSets() {
 		varOut = new HashSet<>();
 		for(Block after: successors) {

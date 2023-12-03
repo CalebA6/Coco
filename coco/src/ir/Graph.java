@@ -216,6 +216,14 @@ public class Graph implements Iterable<Block> {
 		}
 	}
 	
+	public Collection<String> getFunctionCalls() {
+		List<String> functions = new ArrayList<>();
+		for(Block block: blocks) {
+			functions.addAll(block.functionsCalled());
+		}
+		return functions;
+	}
+	
 	public Block getEntryBlock() {
 		return entry;
 	}

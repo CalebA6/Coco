@@ -53,16 +53,52 @@ public class Compiler {
 	public String optimization(List<String> optStrings, CommandLine optsCmd) {
 		if(functions == null) functions = ast.genIr();
 		
+		boolean change;
 		for(Graph function: functions) {
-			boolean change = true;
+			change = true;
 			while(change) {
 				change = false;
+				function.otherOptimizations();
 				if(optStrings.contains("dce") || optStrings.contains("max")) change = function.eliminateDeadCode() || change;
 				if(optStrings.contains("cf") || optStrings.contains("max")) change = function.foldConstants() || change;
 				if(optStrings.contains("cp") || optStrings.contains("max")) change = function.propagateAssignments(true) || change;
 				if(optStrings.contains("cse") || optStrings.contains("max")) change = function.eliminateCommonSubexpressions() || change;
 				if(optStrings.contains("cpp") || optStrings.contains("max")) change = function.propagateAssignments(false) || change;
-				if(optStrings.contains("max")) function.otherOptimizations();
+			}
+		}
+		
+		if(optStrings.contains("ofe") || optStrings.contains("max")) {
+			Set<Graph> functionsReached = new HashSet<>();
+			Queue<Graph> functionsToExplore = new LinkedList<>();
+			for(Graph function: functions) {
+				if(function.getSignature().equals("main()")) {
+					functionsReached.add(function);
+					functionsToExplore.add(function);
+					break;
+				}
+			}
+			while(functionsToExplore.size() > 0) {
+				Collection<String> newCalls = functionsToExplore.remove().getFunctionCalls();
+				for(String call: newCalls) {
+					for(Graph function: functions) {
+						if(function.getSignature().equals(call)) {
+							if(!functionsReached.contains(function)) {
+								functionsReached.add(function);
+								functionsToExplore.add(function);
+								break;
+							}
+						}
+					}
+				}
+			}
+			List<Graph> unreachedFunctions = new ArrayList<>();
+			for(Graph function: functions) {
+				if(!functionsReached.contains(function)) {
+					unreachedFunctions.add(function);
+				}
+			}
+			for(Graph function: unreachedFunctions) {
+				functions.remove(function);
 			}
 		}
 		
@@ -309,7 +345,7 @@ public class Compiler {
 						int assignee = varLoader.load(instr.assignee);
 						if(Instruction.isVar(instr.value1)) {
 							int assignment = varLoader.load(instr.value1);
-							code.add(new Code(Op.ADDI, assignee, assignment, 0));
+							if(assignee != assignment) code.add(new Code(Op.ADDI, assignee, assignment, 0));
 							varLoader.push(assignment, instr.value1);
 						} else {
 							int value;
@@ -544,7 +580,7 @@ public class Compiler {
 		for(Graph function: functionCodes.keySet()) {
 			next = functionLocations.get(function.getSignature());
 			for(Code inst: functionCodes.get(function)) {
-				// System.out.println(next + ": " + inst);
+				System.out.println(next + ": " + inst);
 				code[next++] = inst.gen();
 			}
 		}
