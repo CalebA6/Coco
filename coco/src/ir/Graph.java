@@ -13,12 +13,14 @@ public class Graph implements Iterable<Block> {
 	
 	private String name;
 	private String[] parameters;
+	private String type;
 	private Block entry;
 	private List<Block> blocks = new ArrayList<>();
 	
-	public Graph(String function, ValueCode code, String[] parameters, Set<String> globalVariables) {
+	public Graph(String function, ValueCode code, String parameters[], String type, Set<String> globalVariables) {
 		name = function;
 		this.parameters = parameters;
+		this.type = type;
 		
 		List<Instruction> instructions = code.instructions;
 		assignIndicies(instructions);
@@ -27,10 +29,10 @@ public class Graph implements Iterable<Block> {
 		addExit(instructions);
 		assignIndicies(instructions);
 		addJumpTargets(instructions);
-		Block block = entry = new Block(globalVariables, this);
+		Block block = entry = new Block(globalVariables, this, true);
 		blocks.add(block);
 		for(Instruction instr: instructions) {
-			if(instr.targeted()) {
+			if(instr.targeted() && block.numInstructions() > 0) {
 				Block newBlock = new Block(globalVariables, this);
 				block.addSuccessor(newBlock);
 				block = newBlock;
@@ -44,6 +46,9 @@ public class Graph implements Iterable<Block> {
 				blocks.add(block);
 			}
 		}
+		for(Block b: blocks) {
+			b.pruneAtReturn();
+		}
 		updateSuccessors(blocks);
 	}
 	
@@ -53,6 +58,10 @@ public class Graph implements Iterable<Block> {
 	
 	public String[] getParameters() {
 		return parameters;
+	}
+	
+	public String getSignature() {
+		return name + type;
 	}
 	
 	public int length() {
@@ -191,6 +200,20 @@ public class Graph implements Iterable<Block> {
 			if(change) someChange = true;
 		}
 		return someChange;
+	}
+	
+	public void otherOptimizations() {
+		boolean change = true;
+		while(change) {
+			change = false;
+			for(Block block: blocks) {
+				change = block.updateSetVariables() || change;
+			}
+		}
+			
+		for(Block block: blocks) {
+			block.zeroUnsetVariables();
+		}
 	}
 	
 	public Block getEntryBlock() {

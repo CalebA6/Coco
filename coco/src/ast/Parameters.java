@@ -1,7 +1,6 @@
 package ast;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import coco.ErrorChecker;
@@ -39,6 +38,20 @@ public class Parameters /*extends Traversible*/ {
 			names.add(parameter.getName().lexeme());
 		}
 		return names;
+	}
+	
+	public String getTypes() {
+		StringBuilder types = new StringBuilder();
+		types.append("(");
+		if(parameters.size() > 0) {
+			types.append(parameters.get(0).getTypeString());
+		}
+		for(int param=1; param<parameters.size(); ++param) {
+			types.append(",");
+			types.append(parameters.get(param).getTypeString());
+		}
+		types.append(")");
+		return types.toString();
 	}
 	
 	@Override

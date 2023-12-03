@@ -65,7 +65,8 @@ public class FunctionDefinitions extends CheckableNode {
 		for(FunctionDeclaration function: functions) {
 			ir.Variables variables = new ir.Variables(globalVariables);
 			String[] parameters = function.getParameters().getNames().toArray(new String[0]);
-			graphs.add(new Graph(function.getName().lexeme(), function.genCode(variables), parameters, globalVariables));
+			String type = function.getParameters().getTypes();
+			graphs.add(new Graph(function.getName().lexeme(), function.genCode(variables), parameters, type, globalVariables));
 		}
 		return graphs;
 	}

@@ -1,7 +1,9 @@
 package coco;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import code.Code;
 import code.Op;
@@ -12,6 +14,7 @@ public class VariableLoader {
 	private Map<String, Integer> funcVarOffsets;
 	private Map<String, Integer> globalVarOffsets;
 	private Map<String, Integer> regAllocs;
+	private Set<Integer> crossAllocedRegs;
 	private int currentReg = 25;
 	
 	public VariableLoader(List<Code> code, Map<String, Integer> regAllocs, Map<String, Integer> funcVarOffsets, Map<String, Integer> globalVarOffsets) {
@@ -19,6 +22,16 @@ public class VariableLoader {
 		this.regAllocs = regAllocs;
 		this.funcVarOffsets = funcVarOffsets;
 		this.globalVarOffsets = globalVarOffsets;
+		
+		crossAllocedRegs = new HashSet<>();
+		for(String funcVar: funcVarOffsets.keySet()) {
+			for(String globalVar: globalVarOffsets.keySet()) {
+				if(regAllocs.get(funcVar) == regAllocs.get(globalVar)) {
+					crossAllocedRegs.add(regAllocs.get(globalVar));
+					break;
+				}
+			}
+		}
 	}
 	
 	public int load(String var) {
@@ -69,14 +82,22 @@ public class VariableLoader {
 		} else if(funcVarOffsets.containsKey(var)) {
 			code.add(new Code(Op.LDW, Compiler.TEMP_REG, Compiler.STACK_REG, offset));
 			code.add(new Code(Op.STW, Compiler.TEMP_REG, Compiler.FRAME_REG, funcVarOffsets.get(var)));
-		} else {
-			throw new RuntimeException("Unaccounted for parameter: " + var);
 		}
+		// else: unused parameter
 	}
 	
 	public void save() {
 		for(String var: funcVarOffsets.keySet()) {
 			if(!isSpilled(var)) {
+				specialPush(regAllocs.get(var), var);
+			}
+		}
+		saveGlobals();
+	}
+	
+	public void saveGlobals() {
+		for(String var: globalVarOffsets.keySet()) {
+			if(!isSpilled(var) && !funcVarOffsets.containsKey(var)) {
 				specialPush(regAllocs.get(var), var);
 			}
 		}
@@ -88,6 +109,15 @@ public class VariableLoader {
 				specialLoad(var, regAllocs.get(var));
 			}
 		}
+		for(String var: globalVarOffsets.keySet()) {
+			if(!isSpilled(var) && !funcVarOffsets.containsKey(var)) {
+				specialLoad(var, regAllocs.get(var));
+			}
+		}
+	}
+	
+	public boolean isCrossAlloced(String var) {
+		return globalVarOffsets.containsKey(var) && crossAllocedRegs.contains(regAllocs.get(var));
 	}
 	
 }

@@ -1,7 +1,6 @@
 package ast;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -119,11 +118,22 @@ public class FunctionCall extends CheckableNode {
 		}
 		call += ")";
 		
+		StringBuilder types = new StringBuilder();
+		types.append("(");
+		if(parameters.size() > 0) {
+			types.append(parameters.get(0).getType());
+		}
+		for(int param=1; param<parameters.size(); ++param) {
+			types.append(",");
+			types.append(parameters.get(param).getType());
+		}
+		types.append(")");
+		
 		if(getReturnType().equals("void")) {
-			instructions.add(new Instruction(call));
+			instructions.add(new Instruction(call, types.toString()));
 			return new ValueCode(instructions, call);
 		}
-		instructions.add(new Instruction(result, call));
+		instructions.add(new Instruction(result, call, types.toString()));
 		return new ValueCode(instructions, result);
 	}
 	

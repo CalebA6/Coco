@@ -62,6 +62,7 @@ public class Compiler {
 				if(optStrings.contains("cp") || optStrings.contains("max")) change = function.propagateAssignments(true) || change;
 				if(optStrings.contains("cse") || optStrings.contains("max")) change = function.eliminateCommonSubexpressions() || change;
 				if(optStrings.contains("cpp") || optStrings.contains("max")) change = function.propagateAssignments(false) || change;
+				if(optStrings.contains("max")) function.otherOptimizations();
 			}
 		}
 		
@@ -211,7 +212,7 @@ public class Compiler {
 			Map<Block, Set<Integer>> jumps = new HashMap<>();
 			Map<Block, Integer> starts = new HashMap<>();
 			
-			if(function.getName().equals("main")) {
+			if(function.getSignature().equals("main()")) {
 				code.add(new Code(Op.ADDI, FRAME_REG, GLOBAL_REG, offset));
 			}
 			
@@ -235,6 +236,11 @@ public class Compiler {
 			
 			for(int param=0; param<funcParams.length; ++param) {
 				varLoader.install(funcParams[param], (funcParams.length - param) * WORD_SIZE - offset);
+			}
+			for(String var: globalVariables) {
+				if(!varLoader.isSpilled(var) && !frameOffsets.containsKey(var) && !varLoader.isCrossAlloced(var)) {
+					varLoader.specialLoad(var, allocs.get(var));
+				}
 			}
 			
 			for(Block block: function) {
@@ -278,6 +284,10 @@ public class Compiler {
 								}
 							} else if(instr.assignee.equals("call println()")) {
 								code.add(new Code(Op.WRL, 0, 0, 0));
+							} else if(instr.assignee.equals("call readInt()")) {
+								code.add(new Code(Op.RDI, TEMP_REG, 0, 0));
+							} else if(instr.assignee.equals("call readBool()")) {
+								code.add(new Code(Op.RDB, TEMP_REG, 0, 0));
 							} else {
 								callFunction(instr, code, varLoader, functionCalls, offset);
 							}
@@ -292,7 +302,7 @@ public class Compiler {
 								varLoader.push(assignee, instr.assignee);
 							} else {
 								callFunction(instr, code, varLoader, functionCalls, offset);
-								varLoader.install(instr.assignee, 0);
+								varLoader.install(instr.assignee, (instr.getParameters().length + 1) * -WORD_SIZE);
 							}
 						}
 					} else if(instr.isCopy()) {
@@ -343,14 +353,15 @@ public class Compiler {
 									second = Integer.parseInt(instr.value2);
 								}
 							} else {
-								code.add(new Code(Op.ADDI, TEMP_REG, 0, Integer.parseInt(instr.value1)));
+								
+								code.add(new Code(Op.ADDI, TEMP_REG, 0, getValue(instr.value1)));
 								first = TEMP_REG;
 								if(Instruction.isVar(instr.value2)) {
 									op = Op.CMP;
 									second = varLoader.load(instr.value2);
 								} else {
 									op = Op.CMPI;
-									second = Integer.parseInt(instr.value2);
+									second = getValue(instr.value2);
 								}
 							}
 							code.add(new Code(op, TEMP_REG, first, second));
@@ -467,9 +478,10 @@ public class Compiler {
 						code.add(new Code(op, decision, 0, jumpVector));
 						varLoader.push(decision, instr.value1);
 					} else if(instr.isReturn()) {
-						if(function.getName().equals("main")) {
+						if(function.getSignature().equals("main()")) {
 							code.add(new Code(Op.RET, 0, 0, 0));
 						} else {
+							varLoader.saveGlobals();
 							if(instr.value1 != null) {
 								int reg;
 								if(Instruction.isVar(instr.value1)) {
@@ -485,14 +497,15 @@ public class Compiler {
 									code.add(new Code(Op.ADDI, TEMP_REG, 0, value));
 									reg = TEMP_REG;
 								}
-								code.add(new Code(Op.STW, reg, FRAME_REG, WORD_SIZE));
+								code.add(new Code(Op.STW, reg, FRAME_REG, -WORD_SIZE));
 							}
 							code.add(new Code(Op.RET, 0, 0, RETURN_REG));
 						}
 					} else if(instr.isExit()) {
-						if(function.getName().equals("main")) {
+						if(function.getSignature().equals("main()")) {
 							code.add(new Code(Op.RET, 0, 0, 0));
 						} else {
+							varLoader.saveGlobals();
 							code.add(new Code(Op.RET, 0, 0, RETURN_REG));
 						}
 					}
@@ -500,34 +513,27 @@ public class Compiler {
 			}
 			
 			functionCodes.put(function, code);
-			
-			// Troubleshooting
-			/* System.out.println("### " + function.getName());
-			for(Code inst: code) {
-				System.out.println(inst);
-			}
-			System.out.println(); */
 		}
 		
 		Map<String, Integer> functionSizes = new HashMap<>();
 		for(Graph function: functionCodes.keySet()) {
-			functionSizes.put(function.getName(), functionCodes.get(function).size());
+			functionSizes.put(function.getSignature(), functionCodes.get(function).size());
 		}
 		
 		Map<String, Integer> functionLocations = new HashMap<>();
-		functionLocations.put("main", 0);
-		int location = functionSizes.get("main");
+		functionLocations.put("main()", 0);
+		int location = functionSizes.get("main()");
 		for(Graph function: functionCodes.keySet()) {
-			if(!function.getName().equals("main")) {
-				functionLocations.put(function.getName(), location);
-				location += functionSizes.get(function.getName());
+			if(!function.getSignature().equals("main()")) {
+				functionLocations.put(function.getSignature(), location);
+				location += functionSizes.get(function.getSignature());
 			}
 		}
 		
 		for(Graph function: functions) {
-			if(functionCalls.containsKey(function.getName())) {
-				for(Code call: functionCalls.get(function.getName())) {
-					call.setJump(functionLocations.get(function.getName()) * WORD_SIZE);
+			if(functionCalls.containsKey(function.getSignature())) {
+				for(Code call: functionCalls.get(function.getSignature())) {
+					call.setJump(functionLocations.get(function.getSignature()) * WORD_SIZE);
 				}
 			}
 		}
@@ -536,7 +542,7 @@ public class Compiler {
 		int[] code = new int[length];
 		int next = 0;
 		for(Graph function: functionCodes.keySet()) {
-			next = functionLocations.get(function.getName());
+			next = functionLocations.get(function.getSignature());
 			for(Code inst: functionCodes.get(function)) {
 				// System.out.println(next + ": " + inst);
 				code[next++] = inst.gen();
@@ -544,6 +550,15 @@ public class Compiler {
 		}
 		
 		return code;
+	}
+	
+	private static int getValue(String value) {
+		try {
+			return Integer.parseInt(value);
+		} catch(NumberFormatException e) {
+			if(value.equals("true")) return 1;
+			else return 0;
+		}
 	}
 	
 	private void callFunction(Instruction instr, List<Code> code, VariableLoader varLoader, Map<String, Collection<Code>> functionCalls, int offset) {
@@ -574,10 +589,10 @@ public class Compiler {
 		
 		Code jump = new Code(Op.JSR, -1);
 		code.add(jump);
-		if(!functionCalls.containsKey(instr.getFunctionName())) {
-			functionCalls.put(instr.getFunctionName(), new ArrayList<>());
+		if(!functionCalls.containsKey(instr.getSignature())) {
+			functionCalls.put(instr.getSignature(), new ArrayList<>());
 		}
-		functionCalls.get(instr.getFunctionName()).add(jump);
+		functionCalls.get(instr.getSignature()).add(jump);
 		
 		code.add(new Code(Op.SUBI, STACK_REG, FRAME_REG, parameters.length * -WORD_SIZE));
 		code.add(new Code(Op.SUBI, FRAME_REG, STACK_REG, offset));

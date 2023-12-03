@@ -1,6 +1,7 @@
 package ir;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,11 +17,14 @@ public class Block implements Iterable<Instruction> {
 	Set<Block> predeccessors = new HashSet<>();
 	Set<Block> successors = new HashSet<>();
 	String name = "B" + ++index;
+	boolean entry = false;
 	
 	Set<String> varIn = new HashSet<>();
 	Set<String> varOut = new HashSet<>();
 	Map<String, String> expIn = new HashMap<>();
 	Map<String, String> expOut = new HashMap<>();
+	Set<String> setIn = new HashSet<>();
+	Set<String> setOut = new HashSet<>();
 	
 	Set<String> globalVariables;
 	
@@ -29,6 +33,11 @@ public class Block implements Iterable<Instruction> {
 	public Block(Set<String> globalVariables, Graph graph) {
 		this.globalVariables = globalVariables;
 		this.graph = graph;
+	}
+	
+	public Block(Set<String> globalVariables, Graph graph, boolean entry) {
+		this(globalVariables, graph);
+		this.entry = entry;
 	}
 	
 	public void addInstruction(Instruction instruction) {
@@ -66,7 +75,7 @@ public class Block implements Iterable<Instruction> {
 	public void removeSuccessor(Block successor) {
 		if(successors.remove(successor) && (instructions.size() > 0)) {
 			Instruction last = instructions.get(instructions.size() - 1);
-			if(last.isJump() && (last.getJump().getBlock() == successor)) {
+			if((last != null && !last.isReturn()) && last.isJump() && (last.getJump().getBlock() == successor)) {
 				last.setJump(successor.getFirst());
 			}
 		}
@@ -113,10 +122,30 @@ public class Block implements Iterable<Instruction> {
 		varOut = new HashSet<>();
 	}
 	
+	public void pruneAtReturn() {
+		boolean returned = false;
+		for(int i=0; i<numInstructions(); ++i) {
+			if(getInstruction(i).isReturn()) {
+				returned = true;
+			} else if(returned) {
+				instructions.remove(i);
+			}
+		}
+		if(returned) {
+			Collection<Block> wrongs = new ArrayList<>(successors);
+			for(Block block: wrongs) {
+				removeSuccessor(block);
+			}
+		}
+	}
+	
 	public boolean updateLiveVariables() {
 		varOut = new HashSet<>();
 		for(Block after: successors) {
 			varOut.addAll(after.varIn);
+		}
+		if(successors.size() == 0 && !graph.getSignature().equals("main()")) {
+			varOut.addAll(globalVariables);
 		}
 		
 		Set<String> liveVariables = new HashSet<>();
@@ -126,7 +155,7 @@ public class Block implements Iterable<Instruction> {
 			if(instr.isCall() || instr.isVoidCall()) {
 				String function = instr.isCall() ? instr.value1 : instr.assignee;
 				liveVariables.addAll(functionParameters(function));
-				liveVariables.addAll(globalVariables);
+				if(!instr.isBuiltInFunction()) liveVariables.addAll(globalVariables);
 			}
 			if(instr.assignee != null) {
 				liveVariables.remove(instr.assignee);
@@ -155,33 +184,35 @@ public class Block implements Iterable<Instruction> {
 	
 	public boolean updateAvailableExpressions() {
 		expIn = new HashMap<>();
-		Map<String, Boolean> exprSeen = new HashMap<>();
-		boolean first = true;
-		for(Block before: predeccessors) {
-			for(String assignment: before.expOut.keySet()) {
-				String value = before.expOut.get(assignment);
-				if(expIn.containsKey(assignment) && !value.equals(expIn.get(assignment))) {
-					expIn.put(assignment, "#any");
-				} else if(expIn.containsKey(assignment)) {
-					if(first) {
+		if(!entry) {
+			Map<String, Boolean> exprSeen = new HashMap<>();
+			boolean first = true;
+			for(Block before: predeccessors) {
+				for(String assignment: before.expOut.keySet()) {
+					String value = before.expOut.get(assignment);
+					if(expIn.containsKey(assignment) && !value.equals(expIn.get(assignment))) {
+						expIn.put(assignment, "#any");
+					} else if(first) {
 						expIn.put(assignment, value);
 					} else {
 						exprSeen.put(assignment, true);
 					}
 				}
-			}
-			
-			if(first) {
-				for(String expr: expIn.keySet()) {
-					exprSeen.put(expr, false);
-				}
-				first = false;
-			} else {
-				for(String expr: expIn.keySet()) {
-					if(exprSeen.get(expr)) {
+				
+				if(first) {
+					for(String expr: expIn.keySet()) {
 						exprSeen.put(expr, false);
-					} else {
-						expIn.remove(expr);
+					}
+					first = false;
+				} else {
+					Set<String> exprs = new HashSet<>();
+					exprs.addAll(expIn.keySet());
+					for(String expr: exprs) {
+						if(exprSeen.get(expr)) {
+							exprSeen.put(expr, false);
+						} else {
+							expIn.remove(expr);
+						}
 					}
 				}
 			}
@@ -196,6 +227,22 @@ public class Block implements Iterable<Instruction> {
 				String value = exp[1];
 				if(!exprContainsValue(value, var)) {
 					availExp.put(var, value);
+				}
+			} else if(instr.isVoidCall() || instr.isCall()) {
+				if(!instr.isBuiltInFunction()) {
+					Set<String> needsRemoving = new HashSet<>();
+					needsRemoving.addAll(globalVariables);
+					for(String exp: availExp.keySet()) {
+						String[] vars = availExp.get(exp).split(" ");
+						for(String var: vars) {
+							if(globalVariables.contains(var)) {
+								needsRemoving.add(exp);
+							}
+						}
+					}
+					for(String var: needsRemoving) {
+						availExp.remove(var);
+					}
 				}
 			}
 		}
@@ -214,13 +261,43 @@ public class Block implements Iterable<Instruction> {
 		return false;
 	}
 	
+	public boolean updateSetVariables() {
+		setIn = new HashSet<>();
+		for(Block predeccessor: predeccessors) {
+			setIn.addAll(predeccessor.setOut);
+		}
+		if(entry) {
+			setIn.addAll(Arrays.asList(graph.getParameters()));
+		}
+		
+		Set<String> setVars = new HashSet<>();
+		setVars.addAll(setIn);
+		for(int i = 0; i<numInstructions(); ++i) {
+			Instruction instr = instructions.get(i);
+			if(instr.assignee != null && !instr.isVoidCall()) {
+				setVars.add(instr.assignee);
+			}
+		}
+		
+		boolean change = !setOut.equals(setVars);
+		setOut = setVars;
+		return change;
+	}
+	
 	protected boolean eliminateDeadCode() {
 		boolean change = false;
 		Set<String> liveVariables = new HashSet<>();
 		liveVariables.addAll(varOut);
 		for(int i = numInstructions()-1; i>=0; --i) {
 			Instruction instr = instructions.get(i);
-			if(instr.isAssignment() && !liveVariables.contains(instr.assignee)) {
+			if(instr.isCall() || instr.isVoidCall()) {
+				if(instr.isCall() && !liveVariables.contains(instr.assignee)) {
+					instr.assignee = instr.value1;
+					instr.value1 = null;
+				}
+				liveVariables.addAll(Arrays.asList(instr.getParameters()));
+				if(!instr.isBuiltInFunction()) liveVariables.addAll(globalVariables);
+			} else if(instr.isAssignment() && !liveVariables.contains(instr.assignee)) {
 				// Updates Jumps
 				for(Instruction target: instr.getTargetingJumps()) {
 					if(i < numInstructions()-1) {
@@ -241,10 +318,6 @@ public class Block implements Iterable<Instruction> {
 				}
 				instructions.remove(i);
 				change = true;
-			} else if(instr.isCall() || instr.isVoidCall()) {
-				String function = instr.isCall() ? instr.value1 : instr.assignee;
-				liveVariables.addAll(functionParameters(function));
-				liveVariables.addAll(globalVariables);
 			} else {
 				if(instr.assignee != null) {
 					liveVariables.remove(instr.assignee);
@@ -289,6 +362,12 @@ public class Block implements Iterable<Instruction> {
 				default: 
 					boolean boolResult;
 					switch(instr.op) {
+					case EQUAL: 
+						boolResult = left == right;
+						break;
+					case NOT_EQUAL: 
+						boolResult = left != right;
+						break;
 					case LESS_EQUAL: 
 						boolResult = left <= right;
 						break;
@@ -348,6 +427,138 @@ public class Block implements Iterable<Instruction> {
 					}
 				}
 			}
+			
+			if(instr.op != null) {
+				switch(instr.op) {
+				case ADD: 
+					if(instr.value1.equals("0")) {
+						instr.value1 = instr.value2;
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					} else if(instr.value2.equals("0")) {
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case SUB: 
+					if(instr.value2.equals("0")) {
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case MUL: 
+					if(instr.value1.equals("0") || instr.value2.equals("0")) {
+						instr.value1 = "0";
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					} else if(instr.value1.equals("1")) {
+						instr.value1 = instr.value2;
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					} else if(instr.value2.equals("1")) {
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case DIV: 
+					if(instr.value2.equals("1")) {
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case MOD: 
+					if(instr.value2.equals("1")) {
+						instr.value1 = "0";
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case POW: 
+					if(instr.value2.equals("0")) {
+						instr.value1 = "1";
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					} else if(instr.value2.equals("1")) {
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case EQUAL: 
+					if(instr.value1.equals(instr.value2)) {
+						instr.value1 = "true";
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case NOT_EQUAL: 
+					if(instr.value1.equals(instr.value2)) {
+						instr.value1 = "false";
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case LESS_EQUAL: 
+					if(instr.value1.equals(instr.value2)) {
+						instr.value1 = "true";
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case GREATER_EQUAL: 
+					if(instr.value1.equals(instr.value2)) {
+						instr.value1 = "true";
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case LESS: 
+					if(instr.value1.equals(instr.value2)) {
+						instr.value1 = "false";
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case GREATER: 
+					if(instr.value1.equals(instr.value2)) {
+						instr.value1 = "false";
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case OR: 
+					if(instr.value1.equals("true") || instr.value2.equals("true")) {
+						instr.value1 = "true";
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				case AND: 
+					if(instr.value1.equals("false") || instr.value2.equals("false")) {
+						instr.value1 = "false";
+						instr.op = null;
+						instr.value2 = null;
+						change = true;
+					}
+					break;
+				}
+			}
 		}
 		return change;
 	}
@@ -376,24 +587,26 @@ public class Block implements Iterable<Instruction> {
 				String[] parameters = instr.getParameters();
 				for(int param=0; param<parameters.length; ++param) {
 					if(availConsts.containsKey(parameters[param])) {
-						instr.replaceParameter(param, availConsts.get(parameters[param]));
-						change = true;
+						String newValue = availConsts.get(parameters[param]);
+						change = change || !newValue.equals(parameters[param]);
+						instr.replaceParameter(param, newValue);
+					}
+				}
+				if(!instr.isBuiltInFunction()) {
+					for(String var: globalVariables) {
+						availConsts.remove(var);
 					}
 				}
 			} else {
 				if(instr.value1 != null && availConsts.containsKey(instr.value1)) {
-					instr.value1 = availConsts.get(instr.value1);
-					if(instr.value1.equals("e")) {
-						int yz = 114;
-					}
-					change = true;
+					String newValue = availConsts.get(instr.value1);
+					change = change || !newValue.equals(instr.value1);
+					instr.value1 = newValue;
 				}
 				if(instr.value2 != null && availConsts.containsKey(instr.value2)) {
-					if(instr.value2.equals("e")) {
-						int yz = 114;
-					}
-					instr.value2 = availConsts.get(instr.value2);
-					change = true;
+					String newValue = availConsts.get(instr.value2);
+					change = change || !newValue.equals(instr.value2);
+					instr.value2 = newValue;
 				}
 			}
 			if(instr.isCopy() && !instr.isCall() && ((consts && !Instruction.isVar(instr.value1)) || (!consts && Instruction.isVar(instr.value1)))) {
@@ -482,6 +695,33 @@ public class Block implements Iterable<Instruction> {
 		}
 		
 		return change;
+	}
+	
+	public void zeroUnsetVariables() {
+		Set<String> setVariables = new HashSet<>();
+		setVariables.addAll(setIn);
+		
+		for(int i = 0; i<numInstructions(); ++i) {
+			Instruction instr = instructions.get(i);
+			if(instr.isVoidCall() || instr.isCall()) {
+				String[] params = instr.getParameters();
+				for(int param=0; param<params.length; ++param) {
+					if(Instruction.isVar(params[param]) && !setVariables.contains(params[param])) {
+						instr.replaceParameter(param, "0");
+					}
+				}
+				if(!instr.isBuiltInFunction()) setVariables.addAll(globalVariables);
+			}
+			if(instr.assignee != null && !instr.isVoidCall()) {
+				setVariables.add(instr.assignee);
+			}
+			if(instr.value1 != null && !instr.isCall() && Instruction.isVar(instr.value1) && !setVariables.contains(instr.value1)) {
+				instr.value1 = "0";
+			}
+			if(instr.value2 != null && Instruction.isVar(instr.value2) && !setVariables.contains(instr.value2)) {
+				instr.value2 = "0";
+			}
+		}
 	}
 	
 	public List<Collection<String>> genLiveSets() {

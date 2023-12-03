@@ -67,9 +67,9 @@ public class CompilerTester {
                 System.err.println("reg num too large - setting to 24");
                 numRegs = 24;
             }
-            if (numRegs < 4) {
-                System.err.println("reg num too small - setting to 4");
-                numRegs = 4;
+            if (numRegs < 2) {
+                System.err.println("reg num too small - setting to 2");
+                numRegs = 2;
             }
         } catch (NumberFormatException e) {
             System.err.println("Error in option NumRegs -- reseting to 24 (default)");
@@ -79,6 +79,9 @@ public class CompilerTester {
 
         Compiler c = new Compiler(s, numRegs);
         ast.AST ast = c.genAST();
+        if(c.hasError()) {
+        	System.out.println(c.errorReport());
+        }
 
         if (cmd.hasOption("astOut")) {
             String ast_text = ast.printPreOrder();
@@ -143,7 +146,7 @@ public class CompilerTester {
         //PA 7
         try {
             String optimized_dotgraph_text = c.optimization(optArguments, cmd);
-           // System.out.println(optimized_dotgraph_text);
+            System.out.println(optimized_dotgraph_text);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Error caught - see stderr for stack trace " + e.getMessage());

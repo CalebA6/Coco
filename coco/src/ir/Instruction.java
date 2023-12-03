@@ -10,6 +10,7 @@ public class Instruction {
 	public InstructType op = null;
 	public String value2 = null;
 	Instruction location = null;
+	private String parameters;
 	
 	private int index;
 	
@@ -20,15 +21,21 @@ public class Instruction {
 		
 	}
 	
-	// Void Function
-	public Instruction(String call) {
-		assignee = call;
+	// Function
+	public Instruction(String assignee, String call, String parameters) {
+		this.assignee = assignee;
+		this.value1 = call;
+		this.parameters = parameters;
 	}
 	
 	// Copy Assignment
 	public Instruction(String assignee, String value) {
 		this.assignee = assignee;
-		this.value1 = value;
+		if(this.assignee.startsWith("call ")) {
+			parameters = value;
+		} else {
+			this.value1 = value;
+		}
 	}
 	
 	// NOT Instruction
@@ -102,6 +109,10 @@ public class Instruction {
 		return assignee != null && assignee.startsWith("call ");
 	}
 	
+	public boolean isBuiltInFunction() {
+		return getSignature().equals("readInt()") || getSignature().equals("readBool()") || getSignature().equals("printInt(int)") || getSignature().equals("printBool(bool)") || getSignature().equals("println()");
+	}
+	
 	public boolean isCopy() {
 		return assignee != null && value1 != null && op == null;
 	}
@@ -152,6 +163,10 @@ public class Instruction {
 		return callString.substring(5, callString.indexOf('('));
 	}
 	
+	public String getSignature() {
+		return getFunctionName() + parameters;
+	}
+	
 	public String[] getParameters() {
 		if(!isCall() && !isVoidCall()) {
 			throw new RuntimeException("Can only get the parameters of a function call");
@@ -188,10 +203,7 @@ public class Instruction {
 		}
 		base += newParameter;
 		for(int i=index+1; i<parameters.length; ++i) {
-			base += parameters[i];
-			if(i < parameters.length - 1) {
-				base += ",";
-			}
+			base += "," + parameters[i];
 		}
 		base += ")";
 		if(isCall()) {

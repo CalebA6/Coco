@@ -53,15 +53,15 @@ public class Operation extends CheckableNode {
 		} else if(opToken.kind() == Kind.NOT) {
 			if(!BoolType.is(right.getType())) {
 				ErrorType error = new ErrorType();
-				error.setError(opToken, "Cannot " + toString(opToken, left.getType().toString(), right.getType().toString()) + ".");
+				error.setError(opToken, "Cannot " + toString(opToken, right.getType().toString()) + ".");
 				return error;
 			} else {
 				return new BoolType();
 			}
 		} else {
-			if(!NumberType.is(left.getType()) || !NumberType.is(right.getType())) {
+			if((!NumberType.is(left.getType()) || !NumberType.is(right.getType())) && opToken.kind() != Kind.EQUAL_TO) {
 				ErrorType error = new ErrorType();
-				error.setError(opToken, "Cannot " + toString(opToken, right.getType().toString()) + ".");
+				error.setError(opToken, "Cannot " + toString(opToken, left.getType().toString(), right.getType().toString()) + ".");
 				return error;
 			} else {
 				if(operation.startsWith("Relation")) {
