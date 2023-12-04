@@ -58,7 +58,7 @@ The available expressions analysis supports the constant propagation, common sub
 
 The set variables analysis supports the zeroing of uninitialized variables. 
 
-For dead code elimination, constant folding, constant propagation, common subexpression elimination, and copy propagation, the optimization method in Compiler calls a function in the Graph, that function runs the analysis until it is no longer changing and then runs the optimization until it is no longer changing. The analysis is rerun to convergence for each run of the optimization. The Graph calls the blocks to run the optimizations and the analyses. (Constant folding does have an analysis.) 
+For dead code elimination, constant folding, constant propagation, common subexpression elimination, and copy propagation, the optimization method in Compiler calls a function in the Graph, that function runs the analysis until it is no longer changing and then runs the optimization until it is no longer changing. The analysis is rerun to convergence for each run of the optimization. The Graph calls the blocks to run the optimizations and the analyses. (Note that constant folding does not have an analysis.)
 
 Zeroing uninitialized variables working similarly, expect is only needs to run once and it needs to run before the other optimizations (otherwise they miss out on chances for optimization). 
 
@@ -127,8 +127,16 @@ Current Stack Pointer $\rightarrow$ & \\
 \newpage
 \section*{Updates after Evaluation}
 Since the evaluation, I have made a lot of progress on improving the optimizations and have fixed an array of other problems. 
-I have changed how optimizations exempt global variables to improve them. 
-I have allowed constant folding to fold when only one of the operands is know if it has trivial result. 
-I got rid of the ghost block which didn't appear in the dot graphs, but prevented some optimizations. 
-I fixed function overloading. 
-Removed copies between the same register from the code. 
+\begin{itemize}
+\item I have changed how optimizations exempt global variables to improve them. 
+\item I changed how to live sets generation handles global variables to improve the efficiency of the register allocation. 
+\item I have allowed constant folding to fold when only one of the operands is know if it has trivial result. 
+\item I have allowed constant folding to cut links on jumps that cannot be taken. 
+\item I added orphan function elimination. 
+\item I made the optimizer set all unitialized variables to zero. 
+\item I got rid of the ghost block which didn't appear in the dot graphs, but prevented some optimizations. 
+\item I fixed function overloading. 
+\item Removed copies between the same register from the code. 
+\item Removed the loading of global variables at the start of the main function. 
+\item Removed the unneccessary storing of operands after comparisons. 
+\end{itemize}

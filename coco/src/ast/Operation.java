@@ -59,7 +59,7 @@ public class Operation extends CheckableNode {
 				return new BoolType();
 			}
 		} else {
-			if((!NumberType.is(left.getType()) || !NumberType.is(right.getType())) && opToken.kind() != Kind.EQUAL_TO) {
+			if((!NumberType.is(left.getType()) || !NumberType.is(right.getType())) && opToken.kind() != Kind.EQUAL_TO && opToken.kind() != Kind.NOT_EQUAL) {
 				ErrorType error = new ErrorType();
 				error.setError(opToken, "Cannot " + toString(opToken, left.getType().toString(), right.getType().toString()) + ".");
 				return error;

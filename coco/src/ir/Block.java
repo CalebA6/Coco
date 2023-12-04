@@ -113,6 +113,41 @@ public class Block implements Iterable<Instruction> {
 		successors.remove(predeccessor);
 	}
 	
+	public void disconnect(Block predeccessor) {
+		predeccessors.remove(predeccessor);
+		if(predeccessors.size() <= 0) {
+			for(Block successor: successors) {
+				successor.disconnect(this);
+			}
+			graph.removeBlock(this);
+		}
+	}
+	
+	public void delete() {
+		for(Block predeccessor: predeccessors) {
+			predeccessor.addSuccessors(successors);
+			predeccessor.removeSuccessor(this);
+		}
+		for(Block successor: successors) {
+			successor.addPredeccessors(predeccessors);
+			successor.removePredeccessor(this);
+		}
+		graph.removeBlock(this);
+	}
+	
+	public void delete(Instruction target) {
+		for(Block predeccessor: predeccessors) {
+			predeccessor.addSuccessors(successors);
+			predeccessor.removeSuccessor(this);
+		}
+		for(Block successor: successors) {
+			successor.addPredeccessors(predeccessors);
+			successor.removePredeccessor(this);
+			target.setJump(successor.getFirst());
+		}
+		graph.removeBlock(this);
+	}
+	
 	public String getName() {
 		return name;
 	}
@@ -559,6 +594,32 @@ public class Block implements Iterable<Instruction> {
 					break;
 				}
 			}
+			
+			if(instr.isConditionalJump()) {
+				boolean decision = instr.value1.equals("true");
+				if(decision || instr.value1.equals("false")) {
+					// Finds next block
+					Block next = instr.getJump().getBlock();
+					if(!decision) {
+						for(Block block: successors) { // Should be a max of 2 successors
+							if(block != next) {
+								next = block;
+								break;
+							}
+						}
+					}
+					
+					// Get rid of other successor
+					List<Block> unreachable = new ArrayList<>();
+					for(Block block: successors) {
+						if(block != next) {
+							block.disconnect(this);
+							unreachable.add(block);
+						}
+					}
+					successors.removeAll(unreachable);
+				}
+			}
 		}
 		return change;
 	}
@@ -609,10 +670,20 @@ public class Block implements Iterable<Instruction> {
 					instr.value2 = newValue;
 				}
 			}
+			if(instr.assignee != null) {
+				List<String> litToRemove = new ArrayList<>();
+				for(String lit: availConsts.keySet()) {
+					String value = availConsts.get(lit);
+					if(instr.assignee.equals(value)) {
+						litToRemove.add(lit);
+					}
+				}
+				for(String lit: litToRemove) {
+					availConsts.remove(lit);
+				}
+			}
 			if(instr.isCopy() && !instr.isCall() && ((consts && !Instruction.isVar(instr.value1)) || (!consts && Instruction.isVar(instr.value1)))) {
 				availConsts.put(instr.assignee, instr.value1);
-			} else if(instr.assignee != null) {
-				availConsts.remove(instr.assignee);
 			}
 		}
 		
@@ -749,7 +820,7 @@ public class Block implements Iterable<Instruction> {
 			if(instr.isCall() || instr.isVoidCall()) {
 				String function = instr.isCall() ? instr.value1 : instr.assignee;
 				liveVariables.addAll(functionParameters(function));
-				liveVariables.addAll(globalVariables);
+				if(!instr.isBuiltInFunction()) liveVariables.addAll(globalVariables);
 			}
 			boolean assigneeNeedsAllocation = false;
 			if(instr.assignee != null) {

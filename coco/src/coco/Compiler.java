@@ -221,10 +221,10 @@ public class Compiler {
 			regAllocs.put(function, allocs);
 			
 			// Testing: Prints Allocation
-			for(String var: nameToLv.keySet()) {
+			/* for(String var: nameToLv.keySet()) {
 				System.out.println(var + ": " + nameToLv.get(var).getReg());
 			}
-			System.out.println();
+			System.out.println(); */
 		}
 	}
 	
@@ -273,9 +273,11 @@ public class Compiler {
 			for(int param=0; param<funcParams.length; ++param) {
 				varLoader.install(funcParams[param], (funcParams.length - param) * WORD_SIZE - offset);
 			}
-			for(String var: globalVariables) {
-				if(!varLoader.isSpilled(var) && !frameOffsets.containsKey(var) && !varLoader.isCrossAlloced(var)) {
-					varLoader.specialLoad(var, allocs.get(var));
+			if(!function.getSignature().equals("main()")) {
+				for(String var: globalVariables) {
+					if(!varLoader.isSpilled(var) && !frameOffsets.containsKey(var) && !varLoader.isCrossAlloced(var)) {
+						varLoader.specialLoad(var, allocs.get(var));
+					}
 				}
 			}
 			
@@ -401,8 +403,6 @@ public class Compiler {
 								}
 							}
 							code.add(new Code(op, TEMP_REG, first, second));
-							varLoader.push(first, instr.value1);
-							varLoader.push(second, instr.value2);
 							int assignee = varLoader.load(instr.assignee);
 							code.add(new Code(Op.ADDI, assignee, 0, 1));
 							switch(instr.op) {

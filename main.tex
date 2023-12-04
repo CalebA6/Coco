@@ -66,7 +66,7 @@ The code generator takes the IR and the register allocation and generates DLX ma
 
 Said more succinctly, the scanner takes the program and grabs the meaningful parts (statements and variable name and not comments or spaces), passes it to the AST which puts those tokens into a meaningful structure. 
 
-Cocopiler is not fully complete yet, unfortunately. It is mostly functional; however, there may still be some bugs, arrays do not currently work, and block folding is not implemented. 
+Cocopiler is not fully complete yet, unfortunately. It is mostly functional; however, there may still be some bugs, arrays do not currently work, and block folding is not implemented (however, block pruning is). 
 
 \subsection*{Feature Check List}
 \begin{todolist}
@@ -93,9 +93,9 @@ Cocopiler is not fully complete yet, unfortunately. It is mostly functional; how
 \subsection*{KLOC}
 \large
 \begin{tabular}{p{3.5cm}l}
-    Code: & 6788\\
+    Code: & 6755\\
     Comment: & 250\\
-    Total: & 8203 
+    Total: & 8158 
 \end{tabular}
 }
 % \noindent\rule{\textwidth}{1pt}

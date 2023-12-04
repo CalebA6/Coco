@@ -147,8 +147,8 @@ public class Graph implements Iterable<Block> {
 	
 	public boolean foldConstants() {
 		boolean change = false;
-		for(Block block: blocks) {
-			change = block.foldConstants() || change;
+		for(int block=0; block<blocks.size(); ++block) {
+			change = blocks.get(block).foldConstants() || change;
 		}
 		return change;
 	}
