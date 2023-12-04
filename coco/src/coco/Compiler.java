@@ -221,15 +221,15 @@ public class Compiler {
 			regAllocs.put(function, allocs);
 			
 			// Testing: Prints Allocation
-			/* for(String var: nameToLv.keySet()) {
+			for(String var: nameToLv.keySet()) {
 				System.out.println(var + ": " + nameToLv.get(var).getReg());
 			}
-			System.out.println(); */
+			System.out.println();
 		}
 	}
 	
 	public int[] genCode() {
-		if(regAllocs == null) regAlloc(26);
+		if(regAllocs == null) regAlloc(24);
 		
 		Set<String> globalVariables = ast.getGlobalVars();
 		Map<String, Integer> globalOffsets = new HashMap<>();
@@ -580,7 +580,7 @@ public class Compiler {
 		for(Graph function: functionCodes.keySet()) {
 			next = functionLocations.get(function.getSignature());
 			for(Code inst: functionCodes.get(function)) {
-				System.out.println(next + ": " + inst);
+				// System.out.println(next + ": " + inst);
 				code[next++] = inst.gen();
 			}
 		}
