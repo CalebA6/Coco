@@ -93,7 +93,36 @@ The stack pointer pointer to the word just after the function variables storage 
 
 When a function is called its parameters are stored in memory just below the function variables and the current return value is placed immediately after the parameters. 
 
-% add diagram
+\captionsetup[table]{name=Figure}
+\begin{table}[h!]
+\centering
+\begin{tabular}{r|c|}
+ \cline{2-2}
+ & \\
+ & \\
+ & Global Variables \\
+ & \\
+Old Frame Pointer $\rightarrow$ & \\
+ \cline{2-2}
+ & \\
+ & Function Variables\\
+ & \\
+ \cline{2-2}
+Old Stack Pointer $\rightarrow$ & \\
+ & Parameters\\
+ & \\
+ \cline{2-2}
+Current Frame Pointer $\rightarrow$ & PC\\
+ \cline{2-2}
+ & \\
+ & Function Variables\\
+ & \\
+ \cline{2-2}
+Current Stack Pointer $\rightarrow$ & \\
+ \cline{2-2}
+\end{tabular}
+\caption{Shows stack setup after a single function call.}
+\end{table}
 
 \newpage
 \section*{Updates after Evaluation}
